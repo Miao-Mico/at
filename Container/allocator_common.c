@@ -6,8 +6,6 @@
 
 #include "allocator_common.h"
 
-//#include "debug_component.h"
-
 /*
 *********************************************************************************************************
 *                                            LOCAL DEFINES
@@ -84,11 +82,11 @@ struct memory_control_s {
 
 void *allocator_common_function_address_tables[] =
 {
-	(void *)&allocator_control_configration_init,							/* No.0 : initialize */
+	(void *)&allocator_control_configuration_init,							/* No.0 : initialize */
 
-	(void *)&allocator_control_configration_destroy,						/* No.1 : destroy */
+	(void *)&allocator_control_configuration_destroy,						/* No.1 : destroy */
 
-	(void *)&allocator_control_configration_exception,						/* No.3 : exception */
+	(void *)&allocator_control_configuration_exception,						/* No.3 : exception */
 
 	(void *)&allocator_control_allocate,									/* No.4 : allocate */
 
@@ -116,7 +114,7 @@ void *allocator_common_function_address_tables[] =
  * @return NONE
  */
 
-void allocator_control_configration_init(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator,
+void allocator_control_configuration_init(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator,
 										 void (*lack_of_memory)(void *))
 {
 	assert(allocator);
@@ -130,7 +128,7 @@ void allocator_control_configration_init(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator
 
 	allocator_alloced->allocator_type_id = ALLOCATOR_COMMON;                                       /* Assign the allocator struct */
 	allocator_alloced->info.size = 0u;
-	allocator_control_configration_exception(allocator_alloced, lack_of_memory);
+	allocator_control_configuration_exception(allocator_alloced, lack_of_memory);
 
 	#if (ALLOCATOR_CFG_DEBUG_MODE_EN)
 
@@ -149,7 +147,7 @@ void allocator_control_configration_init(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator
  * @return NONE
  */
 
-void allocator_control_configration_destroy(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator)
+void allocator_control_configuration_destroy(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator)
 {
 	assert(allocator);
 
@@ -193,7 +191,7 @@ void allocator_control_configration_destroy(ALLOCATOR_COMMON_TYPEDEF_PPTR alloca
  * @return NONE
  */
 
-void allocator_control_configration_exception(ALLOCATOR_COMMON_TYPEDEF_PTR allocator,
+void allocator_control_configuration_exception(ALLOCATOR_COMMON_TYPEDEF_PTR allocator,
 											  void (*lack_of_memory)(void *))
 {
 	assert(allocator);

@@ -7,22 +7,28 @@
 *********************************************************************************************************
 */
 
-#ifndef __ALLOCATOR_H
-#define __ALLOCATOR_H
+#ifndef __DELAY_H
+#define __DELAY_H
 
 /*
 *********************************************************************************************************
-*                                          INCLUDE FILES
+*                                            INCLUDE FILES
 *********************************************************************************************************
 */
 
-#include "allocator_common.h"
+#include "time_manage.h"
 
 /*
 *********************************************************************************************************
-*									      CONFIG DEFINES
+*									            DEFINES
 *********************************************************************************************************
 */
+
+/* Configure        if enable hardware timer.															*/
+#define DELAY_CFG_HARDWARE_TIMER_EN												0u
+
+/* Configure        if enable real time kernel os.														*/
+#define DELAY_CFG_REAL_TIME_KERNEL_OS_SYSTEM_EN									    0u
 
 /*
 *********************************************************************************************************
@@ -30,9 +36,27 @@
 *********************************************************************************************************
 */
 
+/**
+ * @brief This type will control the block_delay.
+ */
+
+struct block_delay_control_s {
+	void (*config)(struct block_delay_s *delay,
+				   time_manage_size_t time_freq);
+
+	void (*operate)(struct block_delay_s *delay,
+					time_manage_size_t sec, time_manage_size_t msec, time_manage_size_t usec);
+
+	#if (DELAY_CFG_HARDWARE_TIMER_EN)
+
+	time_manage_timer_counter_t counter;
+
+	#endif // (DELAY_CFG_HARDWARE_TIMER_EN)
+};
+
 /*
 *********************************************************************************************************
-*								         FUNCTION PROTOTYPES
+*								            FUNCTION PROTOTYPES
 *********************************************************************************************************
 */
 
@@ -48,4 +72,4 @@
 *********************************************************************************************************
 */
 
-#endif // !__ALLOCATOR_H
+#endif // !__DELAY_H

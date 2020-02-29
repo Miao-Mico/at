@@ -71,19 +71,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Storage\Project\Microsoft-Visual-Studio\at\Container;C:\Storage\Project\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Storage\Project\Microsoft-Visual-Studio\at\Text;C:\Storage\Project\Microsoft-Visual-Studio\at\Time Manage;C:\Storage\Project\Microsoft-Visual-Studio\at\Container;C:\Storage\Project\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Storage\Project\Microsoft-Visual-Studio\at\Container;C:\Storage\Project\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Storage\Project\Microsoft-Visual-Studio\at\Text;C:\Storage\Project\Microsoft-Visual-Studio\at\Time Manage;C:\Storage\Project\Microsoft-Visual-Studio\at\Container;C:\Storage\Project\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Storage\Project\Microsoft-Visual-Studio\at\Container;C:\Storage\Project\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Storage\Project\Microsoft-Visual-Studio\at\Text;C:\Storage\Project\Microsoft-Visual-Studio\at\Time Manage;C:\Storage\Project\Microsoft-Visual-Studio\at\Container;C:\Storage\Project\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Storage\Project\Microsoft-Visual-Studio\at\Container;C:\Storage\Project\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Storage\Project\Microsoft-Visual-Studio\at\Text;C:\Storage\Project\Microsoft-Visual-Studio\at\Time Manage;C:\Storage\Project\Microsoft-Visual-Studio\at\Container;C:\Storage\Project\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -143,27 +143,59 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AT\at.c" />
+    <ClCompile Include="AT\at_device.c" />
+    <ClCompile Include="AT\at_task.c" />
+    <ClCompile Include="AT\at_task_stack_template.c" />
     <ClCompile Include="Container\allocator_common.c" />
     <ClCompile Include="Container\array_family.c" />
     <ClCompile Include="Container\compare.c" />
+    <ClCompile Include="Container\forward_list.c" />
+    <ClCompile Include="Container\list_family.c" />
     <ClCompile Include="Container\sort.c" />
     <ClCompile Include="Container\stack.c" />
     <ClCompile Include="Container\vector.c" />
     <ClCompile Include="Main\main.c" />
+    <ClCompile Include="Time Manage\clocker.c" />
+    <ClCompile Include="Time Manage\delay.c" />
+    <ClCompile Include="Time Manage\GeneralHashFunctions.c" />
+    <ClCompile Include="Time Manage\timeout.c" />
+    <ClCompile Include="Time Manage\time_manage.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AT\at.h" />
+    <ClInclude Include="AT\at_cfg.h" />
+    <ClInclude Include="AT\at_def.h" />
+    <ClInclude Include="AT\at_device.h" />
+    <ClInclude Include="AT\at_task.h" />
+    <ClInclude Include="AT\at_task_stack_template.h" />
     <ClInclude Include="Container\algorithm.h" />
     <ClInclude Include="Container\algorithm_def.h" />
     <ClInclude Include="Container\allocator.h" />
+    <ClInclude Include="Container\allocator_cfg.h" />
     <ClInclude Include="Container\allocator_common.h" />
     <ClInclude Include="Container\allocator_def.h" />
     <ClInclude Include="Container\array_family.h" />
     <ClInclude Include="Container\compare.h" />
+    <ClInclude Include="Container\container_cfg.h" />
     <ClInclude Include="Container\container_def.h" />
+    <ClInclude Include="Container\forward_list.h" />
+    <ClInclude Include="Container\list_family.h" />
     <ClInclude Include="Container\sort.h" />
     <ClInclude Include="Container\stack.h" />
     <ClInclude Include="Container\vector.h" />
+    <ClInclude Include="Time Manage\clocker.h" />
+    <ClInclude Include="Time Manage\delay.h" />
+    <ClInclude Include="Time Manage\GeneralHashFunctions.h" />
+    <ClInclude Include="Time Manage\timeout.h" />
+    <ClInclude Include="Time Manage\time_manage_def.h" />
+    <ClInclude Include="Time Manage\time_manage.h" />
+    <ClInclude Include="Time Manage\time_manage_cfg.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Text\controller_receive.txt" />
+    <Text Include="Text\controller_send.txt" />
+    <Text Include="Text\peripheral_device_receive.txt" />
+    <Text Include="Text\peripheral_device_send.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

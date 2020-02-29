@@ -57,7 +57,7 @@ typedef struct allocator_s *ALLOCATOR_COMMON_TYPEDEF_PTR, **ALLOCATOR_COMMON_TYP
  * @return NONE
  */
 
-void allocator_control_configration_init(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator,
+void allocator_control_configuration_init(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator,
 										 void (*lack_of_memory)(void *));
 
 /**
@@ -68,7 +68,7 @@ void allocator_control_configration_init(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator
  * @return NONE
  */
 
-void allocator_control_configration_destroy(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator);
+void allocator_control_configuration_destroy(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator);
 
 /**
  * @brief This function will destroy and clean the allocator struct.
@@ -79,7 +79,7 @@ void allocator_control_configration_destroy(ALLOCATOR_COMMON_TYPEDEF_PPTR alloca
  * @return NONE
  */
 
-void allocator_control_configration_exception(ALLOCATOR_COMMON_TYPEDEF_PTR allocator,
+void allocator_control_configuration_exception(ALLOCATOR_COMMON_TYPEDEF_PTR allocator,
 											  void (*lack_of_memory)(void *));
 
 /**

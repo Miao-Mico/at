@@ -7,22 +7,32 @@
 *********************************************************************************************************
 */
 
-#ifndef __ALLOCATOR_H
-#define __ALLOCATOR_H
+#ifndef __ALLOCATOR_CONFIGURATION_H
+#define __ALLOCATOR_CONFIGURATION_H
 
 /*
 *********************************************************************************************************
-*                                          INCLUDE FILES
+*                                            INCLUDE FILES
 *********************************************************************************************************
 */
-
-#include "allocator_common.h"
 
 /*
 *********************************************************************************************************
-*									      CONFIG DEFINES
+*									            DEFINES
 *********************************************************************************************************
 */
+
+/* Configure    allocator global size type.																*/
+#define ALLOCATOR_GLOBAL_CFG_SIZE_TYPE															size_t
+
+/* Configure    allocator global memory pool size.                                                      */
+#define ALLOCATOR_GLOBAL_CFG_MEMORY_POOL_SIZE			                                        102400u
+
+/* Configure    if enable allocator global debug component.												*/
+#define ALLOCATOR_GLOBAL_CFG_DEBUG_COMPONENT_EN			                                        0u
+
+#pragma warning( disable : 4996)
+#pragma warning( disable : 26812)
 
 /*
 *********************************************************************************************************
@@ -32,7 +42,7 @@
 
 /*
 *********************************************************************************************************
-*								         FUNCTION PROTOTYPES
+*								            FUNCTION PROTOTYPES
 *********************************************************************************************************
 */
 
@@ -48,4 +58,4 @@
 *********************************************************************************************************
 */
 
-#endif // !__ALLOCATOR_H
+#endif // !__ALLOCATOR_CONFIGURATION_H
