@@ -16,7 +16,7 @@
 *********************************************************************************************************
 */
 
-#include "time_manage.h"
+#include "time_manage_def.h"
 
 /*
 *********************************************************************************************************
@@ -35,13 +35,24 @@
  */
 
 struct timeout_control_s {
-	void (*config)(struct timeout_s *timeout,
-				   time_manage_size_t time_freq);
+	struct {
+		errno_t(*init)(struct timeout_s **timeout,
+					   time_manage_size_t timeout_freq,
+					   struct time_manage_timer_package_s *timer_package);
+
+		errno_t(*destroy)(struct timeout_s **timeout);
+
+		errno_t(*calibrate)(struct timeout_s *timeout);
+
+		errno_t(*change_time_sources)(struct timeout_s *timeout,
+									  void *timer,
+									  struct time_manage_timer_package_s *timer_package);
+	}configuration;
 
 	void (*set)(struct timeout_s *timeout,
 				time_manage_size_t sec, time_manage_size_t msec, time_manage_size_t usec);
 
-	bool (*inquire)(void);
+	bool (*inquire)(struct timeout_s *timeout);
 };
 
 /*

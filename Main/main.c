@@ -4,8 +4,9 @@
 #include <process.h>
 
 #include "at.h"
-#include "at_device.h"
+#include "at_device_template.h"
 #include "time_manage.h"
+#include "time_manage_timer_template.h"
 #include "clocker.h"
 
 #define MAIN_CFG_CONTROLLER_SEND_TO_FILENAME												\
@@ -29,8 +30,8 @@ size_t get_rand_delay_time(void);
 
 at_stp at = NULL;
 
-char *controller_file_name[2];
-char *peripheral_file_name[2];
+char *controller_file_name[4];
+char *peripheral_file_name[4];
 
 struct clocker_s *clocker = NULL;
 
@@ -40,93 +41,64 @@ struct at_device_package_s *at_windows_peripheral_package;
 size_t thread_id_hardware_layer = 0;
 HANDLE thread_handle_hardware_layer = 0;
 
-struct at_task_s *at_task_os_test_task = NULL;
-
-void test_task_function(void *arg);
-
 void main(void)
 {
 	main_bsp_init();
 
 	clocker_ctrl.start(clocker);
 
-	at_task_ctrl.os.configuration.init();
+	WaitForSingleObject(thread_handle_hardware_layer, INFINITE);							/* Wait the hardware layer run at least once */
 
-	size_t cnt = 0;
-
-	at_task_ctrl.task.configuration.init(&at_task_os_test_task,				/* Initialize the test task */
-										 "at task os.test task",
-										 test_task_function,
-										 0,
-										 NULL,
-										 NULL,
-										 1);
-
-	at_device_ctrl.package_operator.transmit.send(at_windows_peripheral_package,
-												  "at device control.transmit.send\r\n",
-												  sizeof("at device control.transmit.send\r\n"));
-
-	printf("Cost %llu microsec\r\n", clocker_ctrl.stop(clocker));
-
-	while (true) {
-		at_task_ctrl.os.core();
-
-		if (15 == cnt) {
-			at_task_ctrl.task.configuration.rusume(at_task_os_test_task);
-			printf("Resume \r\n");
-		}
-
-		if (55 == cnt) {
-			at_task_ctrl.task.configuration.suspend(at_task_os_test_task);
-			printf("Suspend \r\n");
-		}
-
-		if (100 < cnt) {
-			break;
-		}
-
-		cnt++;
-	}
-
-	at_task_ctrl.os.configuration.destroy();
-
-	at_device_ctrl.package_operator.configuration.demount(at_windows_peripheral_package);
-
-	WaitForSingleObject(thread_handle_hardware_layer, INFINITE);
-
-	while (0) {
+	while (false) {
 		main_software_layer();
 	}
+
+	printf("have cost: %lldus \r\n", clocker_ctrl.stop(clocker));
+
+	at_windows_peripheral_package->configuration.demount(at_windows_peripheral_package);
+
+	at_ctrl.configuration.destroy(&at);
 
 	_endthreadex(thread_id_hardware_layer);
 
 	return;
 }
 
-void main_bsp_init(void)																/* Board Support Package and AT Initialization */
+void main_bsp_init(void)																	/* Board Support Package and AT Initialization */
 {
-	at_device_ctrl.configuration.init.
-		windows_package(&at_windows_peripheral_package);								/* Initialize the at peripheral device package as the windows i/o file stream */
+	errno_t error = 0;
 
-	at_device_ctrl.package_operator.configuration.										/* Mount the at peripheral device package to the windows i/o file stream */
-		mount(at_windows_peripheral_package, controller_file_name);
+	error += at_device_package_packer.
+		windows_file_stream(&at_windows_peripheral_package,
+							peripheral_file_name);											/* Pack the package as the windows file stream */
 
-	clocker_ctrl.configuration.init(&clocker,											/* Initialize the clocker */
-									MAIN_CFG_CLOCKER_FREQUENCY,
-									&time_mamage_windows_timer_package);
+	error += clocker_ctrl.configuration.init(&clocker,										/* Initialize the clocker */
+											 MAIN_CFG_CLOCKER_FREQUENCY,
+											 &time_mamage_windows_timer_package);
 
 	thread_handle_hardware_layer =
-		(HANDLE)_beginthreadex(NULL, 0, main_hardware_layer, 							/* Begin the hardware layer simulation thread */
+		(HANDLE)_beginthreadex(NULL, 0, main_hardware_layer, 								/* Begin the hardware layer simulation thread */
 							   NULL, 0, &thread_id_hardware_layer);
+
+	error += at_device_package_packer.
+		windows_file_stream(&at_windows_controller_package,
+							controller_file_name);											/* Pack the package as the windows file stream */
+
+	error += at_ctrl.configuration.init(&at, 												/* Initialize the at */
+										at_windows_controller_package);
+
+	if (error) {
+		while (true);
+	}
 }
 
-size_t __stdcall main_hardware_layer(PVOID pM)											/* Simulate the peripheral device random communications */
+size_t __stdcall main_hardware_layer(PVOID pM)												/* Simulate the peripheral device random communications */
 {
 	printf("hardware thread operate\r\n");
 
-	DWORD time_delay = get_rand_delay_time();											/* Get random delay time */
+	DWORD time_delay = get_rand_delay_time();												/* Get random delay time */
 
-	Sleep(time_delay);																	/* Sleep for a while */
+	Sleep(time_delay);																		/* Sleep for a while */
 
 	printf("have sleep %ld ms\r\n", time_delay);
 
@@ -148,17 +120,12 @@ size_t get_rand_delay_time(void)
 	return (rand() % 10 + 1);															/* Get random time between 1 and 10 */
 }
 
-void test_task_function(void *arg)
-{
-	printf("at task os.test task\r\n");
-}
-
-char *controller_file_name[2] = {
-	MAIN_CFG_CONTROLLER_SEND_TO_FILENAME,
-	MAIN_CFG_CONTROLLER_RECEIVE_FROM_FILENAME
+char *controller_file_name[4] = {
+	MAIN_CFG_CONTROLLER_SEND_TO_FILENAME,"a+",
+	MAIN_CFG_CONTROLLER_RECEIVE_FROM_FILENAME,"a+"
 };
 
-char *peripheral_file_name[2] = {
-	MAIN_CFG_PERIPHERAL_DEVICE_SEND_TO_FILENAME,
-	MAIN_CFG_PERIPHERAL_DEVICE_RECEIVE_FROM_FILENAME
+char *peripheral_file_name[4] = {
+	MAIN_CFG_PERIPHERAL_DEVICE_SEND_TO_FILENAME,"a+",
+	MAIN_CFG_PERIPHERAL_DEVICE_RECEIVE_FROM_FILENAME,"a+"
 };

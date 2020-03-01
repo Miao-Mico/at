@@ -104,16 +104,16 @@ struct clocker_control_s clocker_ctrl =
  * @return void
  */
 
-void cloker_control_configuration_init(struct clocker_s **clocker,
-									  time_manage_size_t clocker_freq,
-									  struct time_manage_timer_package_s *timer_package)
+errno_t cloker_control_configuration_init(struct clocker_s **clocker,
+										  time_manage_size_t clocker_freq,
+										  struct time_manage_timer_package_s *timer_package)
 {
 	assert(clocker);
 	assert(timer_package);
 
 	if (NULL == (*clocker = calloc(1, sizeof(struct clocker_s))) ||
 		false == timer_package->verify_package(timer_package)) {
-		return;
+		return 1;
 	}
 
 	(*clocker)->info.switch_status = false;
@@ -127,6 +127,8 @@ void cloker_control_configuration_init(struct clocker_s **clocker,
 		(time_manage_float_t)clocker_freq / (*clocker)->info.timer_freq;
 
 	(*clocker)->timer_package = timer_package;
+
+	return 0;
 }
 
 /**
@@ -137,7 +139,7 @@ void cloker_control_configuration_init(struct clocker_s **clocker,
  * @return void
  */
 
-void cloker_control_configuration_destroy(struct clocker_s **clocker)
+errno_t cloker_control_configuration_destroy(struct clocker_s **clocker)
 {
 	assert(clocker);
 	assert((*clocker));
@@ -145,6 +147,8 @@ void cloker_control_configuration_destroy(struct clocker_s **clocker)
 	free((*clocker));
 
 	(*clocker) = NULL;
+
+	return 0;
 }
 
 /**
@@ -155,7 +159,7 @@ void cloker_control_configuration_destroy(struct clocker_s **clocker)
  * @return void
  */
 
-void cloker_control_configuration_calibrate(struct clocker_s *clocker)
+errno_t cloker_control_configuration_calibrate(struct clocker_s *clocker)
 {
 	assert(clocker);
 
@@ -173,6 +177,8 @@ void cloker_control_configuration_calibrate(struct clocker_s *clocker)
 	clocker->info.timer_func_cost = clocker->timer_package->inquire.
 		timer_counter(clocker->timer_package->timer_ptr) -
 		clocker->info.timer_func_cost;
+
+	return 0;
 }
 
 /**
@@ -183,16 +189,22 @@ void cloker_control_configuration_calibrate(struct clocker_s *clocker)
  * @return void
  */
 
-void cloker_control_configuration_change_timer_sources(struct clocker_s *clocker,
-													  void *timer,
-													  struct time_manage_timer_package_s *timer_package)
+errno_t cloker_control_configuration_change_timer_sources(struct clocker_s *clocker,
+														  void *timer,
+														  struct time_manage_timer_package_s *timer_package)
 {
 	assert(clocker);
 
-	if (NULL == timer_package &&
-		NULL == clocker->timer_package &&
-		NULL == timer) {
-		return;
+	if (NULL == timer_package &&									/* Check if the timer package if is NULL */
+		NULL == (timer_package = clocker->timer_package)) {
+		return 1;													/* Msg: pls check your timer_package or
+																			clocker have no timer_package yet */
+	}
+
+	if (NULL == timer &&
+		NULL == (timer = timer_package->timer_ptr)) {
+		return 2;													/* Msg: pls check your timer or
+																			clocker have no timer in the timer_package yet */
 	}
 
 	if (timer_package != clocker->timer_package) {
@@ -201,6 +213,8 @@ void cloker_control_configuration_change_timer_sources(struct clocker_s *clocker
 	}
 
 	clocker->timer_package->timer_ptr = timer;
+
+	return 0;
 }
 
 /**
@@ -260,7 +274,7 @@ struct time_manage_visual_time_frame_s cloker_control_inquire_visual_time_frame_
  * @return void
  */
 
-void cloker_control_start(struct clocker_s *clocker)
+errno_t cloker_control_start(struct clocker_s *clocker)
 {
 	assert(clocker);
 
@@ -269,20 +283,11 @@ void cloker_control_start(struct clocker_s *clocker)
 		timer_counter(clocker->timer_package->timer_ptr);       /* Inquire the counter of the timer,
 																	Assign it to the record_microsec */
 
-	//char hash_string[40] = { 0 };
-	//long long hash = 0;
-
-	//sprintf_s(hash_string, sizeof(hash_string), "this time is %llu",
-	//		  clocker->timer_package->inquire.timer_counter(clocker->timer_package->timer_ptr));
-
-	//hash = RSHash(hash_string, sizeof(hash_string));
-
-	//sprintf_s(hash_string, sizeof(hash_string), "time is %llu",
-	//		  clocker->timer_package->inquire.timer_counter(clocker->timer_package->timer_ptr));
-
-	//hash = RSHash(hash_string, sizeof(hash_string));
+	// TODO:Recognize the start point,then multi stop/record.
 
 	clocker->info.switch_status = true;
+
+	return 0;
 }
 
 /**

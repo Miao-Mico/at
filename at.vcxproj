@@ -144,8 +144,10 @@
   <ItemGroup>
     <ClCompile Include="AT\at.c" />
     <ClCompile Include="AT\at_device.c" />
+    <ClCompile Include="AT\at_device_template.c" />
     <ClCompile Include="AT\at_task.c" />
-    <ClCompile Include="AT\at_task_stack_template.c" />
+    <ClCompile Include="AT\at_data_structure_template.c" />
+    <ClCompile Include="AT\at_timeout.c" />
     <ClCompile Include="Container\allocator_common.c" />
     <ClCompile Include="Container\array_family.c" />
     <ClCompile Include="Container\compare.c" />
@@ -159,15 +161,17 @@
     <ClCompile Include="Time Manage\delay.c" />
     <ClCompile Include="Time Manage\GeneralHashFunctions.c" />
     <ClCompile Include="Time Manage\timeout.c" />
-    <ClCompile Include="Time Manage\time_manage.c" />
+    <ClCompile Include="Time Manage\time_manage_timer_template.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AT\at.h" />
     <ClInclude Include="AT\at_cfg.h" />
     <ClInclude Include="AT\at_def.h" />
     <ClInclude Include="AT\at_device.h" />
+    <ClInclude Include="AT\at_device_template.h" />
     <ClInclude Include="AT\at_task.h" />
-    <ClInclude Include="AT\at_task_stack_template.h" />
+    <ClInclude Include="AT\at_data_structure_template.h" />
+    <ClInclude Include="AT\at_timeout.h" />
     <ClInclude Include="Container\algorithm.h" />
     <ClInclude Include="Container\algorithm_def.h" />
     <ClInclude Include="Container\allocator.h" />
@@ -190,6 +194,7 @@
     <ClInclude Include="Time Manage\time_manage_def.h" />
     <ClInclude Include="Time Manage\time_manage.h" />
     <ClInclude Include="Time Manage\time_manage_cfg.h" />
+    <ClInclude Include="Time Manage\time_manage_timer_template.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Text\controller_receive.txt" />

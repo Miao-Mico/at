@@ -16,9 +16,6 @@
 *********************************************************************************************************
 */
 
-/* Platform Include file																				*/
-#include <windows.h>
-
 /*
 *********************************************************************************************************
 *									            DEFINES
@@ -26,10 +23,10 @@
 */
 
 /* Configure        if enable integrated structure.														*/
-#define TIME_MANAGE_CFG_SIZE_TYPE													LONGLONG
+#define TIME_MANAGE_CFG_SIZE_TYPE													long long
 
 /* Configure        if enable integrated structure.														*/
-#define TIME_MANAGE_CFG_FLOAT_TYPE													DOUBLE
+#define TIME_MANAGE_CFG_FLOAT_TYPE													double
 
 /* Configure        if enable integrated structure.														*/
 #define TIME_MANAGE_CFG_DEBUG_EN													0u

@@ -7,8 +7,8 @@
 *********************************************************************************************************
 */
 
-#ifndef __AT_TASK_STACK_TEMPLATE_H
-#define __AT_TASK_STACK_TEMPLATE_H
+#ifndef __TIMER_MANAGE_TIMER_TEMPLATE_H
+#define __TIMER_MANAGE_TIMER_TEMPLATE_H
 
 /*
 *********************************************************************************************************
@@ -16,16 +16,16 @@
 *********************************************************************************************************
 */
 
-#include "at_def.h"
+#include "time_manage_def.h"
+
+/* Platform Include file																				*/
+#include <windows.h>
 
 /*
 *********************************************************************************************************
 *									            DEFINES
 *********************************************************************************************************
 */
-
-/* Configure    if enable debug.                                                                        */
-#define AT_TASK_DATA_STRUCTURE_CFG_DEBUG_EN										    0u
 
 /*
 *********************************************************************************************************
@@ -45,11 +45,15 @@
 *********************************************************************************************************
 */
 
+#ifdef _WIN32
+
 /**
- * @brief This struct will contain all the at task control functions.
+ * @brief This variables will obtain the operator of the windows timer.
  */
 
-extern struct at_task_data_structure_package_s ready_list_stack_package;
+struct time_manage_timer_package_s time_mamage_windows_timer_package;
+
+#endif // _WIN32
 
 /*
 *********************************************************************************************************
@@ -57,4 +61,4 @@ extern struct at_task_data_structure_package_s ready_list_stack_package;
 *********************************************************************************************************
 */
 
-#endif // !__AT_TASK_STACK_TEMPLATE_H
+#endif // !__TIMER_MANAGE_TIMER_TEMPLATE_H

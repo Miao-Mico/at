@@ -16,11 +16,8 @@
 *********************************************************************************************************
 */
 
-/* Platform Include file																				*/
-#include <windows.h>
-
 /* Data Structure Include file																		    */
-#include "at_task_stack_template.h"
+#include "at_data_structure_template.h"
 
 /*
 *********************************************************************************************************
@@ -76,14 +73,13 @@
 /* Configure    if enable integrated structure.                                                         */
 #define AT_TASK_CFG_IDLE_TASK_EN											1u
 
-
 /* Configure    if enable at task os user-defined ready list data structure.                            */
 #define AT_TASK_CFG_USER_DEFINED_READY_LIST_DATA_STRUCTURE_EN               1u
 
 #if (AT_TASK_CFG_USER_DEFINED_READY_LIST_DATA_STRUCTURE_EN)
 
 #define AT_TASK_CFG_USER_DEFINED_READY_LIST_DATA_STRUCTURE                                              \
-    (ready_list_stack_package)
+    (at_task_list_stack_package)
 
 #endif // (AT_TASK_CFG_USER_DEFINED_READY_LIST_DATA_STRUCTURE_EN)
 

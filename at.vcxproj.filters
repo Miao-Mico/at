@@ -63,9 +63,6 @@
     <ClCompile Include="Main\main.c">
       <Filter>源文件\main</Filter>
     </ClCompile>
-    <ClCompile Include="Time Manage\time_manage.c">
-      <Filter>源文件\time manage</Filter>
-    </ClCompile>
     <ClCompile Include="Time Manage\clocker.c">
       <Filter>源文件\time manage</Filter>
     </ClCompile>
@@ -90,7 +87,16 @@
     <ClCompile Include="Container\list_family.c">
       <Filter>源文件\container</Filter>
     </ClCompile>
-    <ClCompile Include="AT\at_task_stack_template.c">
+    <ClCompile Include="AT\at_device_template.c">
+      <Filter>源文件\at</Filter>
+    </ClCompile>
+    <ClCompile Include="AT\at_data_structure_template.c">
+      <Filter>源文件\at</Filter>
+    </ClCompile>
+    <ClCompile Include="Time Manage\time_manage_timer_template.c">
+      <Filter>源文件\time manage</Filter>
+    </ClCompile>
+    <ClCompile Include="AT\at_timeout.c">
       <Filter>源文件\at</Filter>
     </ClCompile>
   </ItemGroup>
@@ -176,7 +182,16 @@
     <ClInclude Include="Container\container_cfg.h">
       <Filter>头文件\container</Filter>
     </ClInclude>
-    <ClInclude Include="AT\at_task_stack_template.h">
+    <ClInclude Include="AT\at_device_template.h">
+      <Filter>头文件\at</Filter>
+    </ClInclude>
+    <ClInclude Include="AT\at_data_structure_template.h">
+      <Filter>头文件\at</Filter>
+    </ClInclude>
+    <ClInclude Include="Time Manage\time_manage_timer_template.h">
+      <Filter>头文件\time manage</Filter>
+    </ClInclude>
+    <ClInclude Include="AT\at_timeout.h">
       <Filter>头文件\at</Filter>
     </ClInclude>
   </ItemGroup>

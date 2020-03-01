@@ -43,13 +43,13 @@ typedef void (*at_task_function_t)(void *arg);
 struct at_task_control_s {
 	struct {
 		struct {
-			void (*init)(void);
+			errno_t(*init)(void);
 
-			void (*destroy)(void);
+			errno_t(*destroy)(void);
 		}configuration;
 
 		struct {
-			void (*highest_priority)(void);
+			at_task_size_t(*highest_priority)(void);
 		}inquire;
 
 		void (*core)(void);
@@ -92,7 +92,7 @@ struct at_task_control_s {
  * @return void
  */
 
-void at_task_control_os_configuration_init(void);
+errno_t at_task_control_os_configuration_init(void);
 
 /**
  * @brief This function will destroy the at task os.
@@ -102,7 +102,7 @@ void at_task_control_os_configuration_init(void);
  * @return void
  */
 
-void at_task_control_os_configuration_destroy(void);
+errno_t at_task_control_os_configuration_destroy(void);
 
 /**
  * @brief This function will manage the priority of the os.

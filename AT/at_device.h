@@ -36,15 +36,7 @@
 
 struct at_device_control_s {
 	struct {
-		struct {
-			errno_t(*package)(struct at_device_package_s **package);
-
-			#ifdef _WIN32
-
-			errno_t(*windows_package)(struct at_device_package_s **package);
-
-			#endif // _WIN32
-		}init;
+		errno_t(*init_package)(struct at_device_package_s **package);
 
 		errno_t(*deinit_package)(struct at_device_package_s *package);
 
@@ -87,16 +79,6 @@ struct at_device_control_s {
 *								            FUNCTION PROTOTYPES
 *********************************************************************************************************
 */
-
-/**
- * @brief This function will initialize the device package.
- *
- * @param void
- *
- * @return void
- */
-
-errno_t at_device_control_configuration_init_package(struct at_device_package_s **package);
 
 /**
  * @brief This function will deinitialize the i/o stream of the windows.
@@ -147,7 +129,7 @@ at_size_t at_device_control_inquire_package_size(void);
  */
 
 errno_t at_device_control_package_operator_configuration_mount(struct at_device_package_s *package,
-															  void *arg_list);
+															   void *arg_list);
 
 /**
  * @brief This function will demount the device from the package.
@@ -201,20 +183,6 @@ bool at_device_control_package_operator_verify_device(struct at_device_package_s
  */
 
 bool at_device_control_package_operator_verify_package(struct at_device_package_s *package);
-
-#ifdef _WIN32
-
-/**
- * @brief This function will initialize the i/o stream of the windows.
- *
- * @param void
- *
- * @return void
- */
-
-errno_t at_device_control_windows_package_init(struct at_device_package_s **package);
-
-#endif // _WIN32
 
 /*
 *********************************************************************************************************

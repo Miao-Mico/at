@@ -18,6 +18,8 @@
 
 #endif // (AT_TASK_CFG_IDLE_TASK_EN)
 
+#define AT_TASK_CFG_LIST_STACK_COUNT											2u
+
 /*
 *********************************************************************************************************
 *                                           LOCAL CONSTANTS
@@ -144,22 +146,6 @@ struct at_task_control_s at_task_ctrl = {
 */
 
 /**
- * @brief This function will destroy the at task os.
- *
- * @param void
- *
- * @return void
- */
-
-errno_t at_task_control_task_configuration_init(struct at_task_s **task,
-												char *name,
-												void *func,
-												at_task_size_t priority,
-												void *arg_list,
-												void *hook,
-												enum at_task_option_e opt);
-
-/**
  * @brief This function will be call when the at task os idle task is running.
  *
  * @param void
@@ -183,31 +169,39 @@ void at_task_os_control_idle_task_function(void *arg);
  * @return void
  */
 
-void at_task_control_os_configuration_init(void)
+errno_t at_task_control_os_configuration_init(void)
 {
-	for (size_t cnt = 0; cnt < AT_TASK_CFG_PRIORITY_MAX; cnt++) {           /* Initialize the ready lists */
-		at_task_os_task_list_package->configuration.
-			init(&at_task_os.list_table[cnt].ready);
-		at_task_os_task_list_package->configuration.
-			init(&at_task_os.list_table[cnt].suspend);
+	errno_t err = 0;
+
+	for (size_t cnt = 0; cnt < AT_TASK_CFG_PRIORITY_MAX; cnt++) {							/* Initialize the ready lists */
+		if (at_task_os_task_list_package->configuration.
+			init(&at_task_os.list_table[cnt].ready)) {
+			return 1;
+		}
+
+		if (at_task_os_task_list_package->configuration.
+			init(&at_task_os.list_table[cnt].suspend)) {
+			return 2;
+		}
 	}
 
 	#if (AT_TASK_CFG_IDLE_TASK_EN)
 
-	at_task_control_task_configuration_init(&at_task_os_idle_task,				/* Initialize the idle task */
-											"at task os.idle task",
-											at_task_os_control_idle_task_function,
-											AT_TASK_CFG_IDLE_TASK_PRIORITY,
-											NULL,
-											NULL,
-											0);
-
-	printf("idle task addr:%p func_addr:%p \r\n",
-		   at_task_os_idle_task, (void *)at_task_os_control_idle_task_function);
+	if (at_task_control_task_configuration_init(&at_task_os_idle_task,						/* Initialize the idle task */
+												"at task os.idle task",
+												at_task_os_control_idle_task_function,
+												AT_TASK_CFG_IDLE_TASK_PRIORITY,
+												NULL,
+												NULL,
+												0)) {
+		return 3;
+	}
 
 	#endif // (AT_TASK_CFG_IDLE_TASK_EN)
 
 	at_task_os.os_running = true;
+
+	return 0;
 }
 
 /**
@@ -218,14 +212,41 @@ void at_task_control_os_configuration_init(void)
  * @return void
  */
 
-void at_task_control_os_configuration_destroy(void)
+errno_t at_task_control_os_configuration_destroy(void)
 {
-	for (size_t cnt = 0; cnt < AT_TASK_CFG_PRIORITY_MAX; cnt++) {           /* Destroy the ready lists */
-		at_task_os_task_list_package->configuration.
+	void
+		*group_priority = NULL,
+		*list_priority = NULL,
+		*task_priority_list = NULL;
+
+	at_task_size_t size_priority_list = 0;
+
+	for (size_t cnt = 0; cnt < AT_TASK_CFG_PRIORITY_MAX; cnt++) {							/* Destroy the at task list group of the priorities,total have _PRIORITY_MAX */
+		group_priority = 																	/* Get the list group of the priority */
+			((void **)at_task_os.list_table + cnt * AT_TASK_CFG_LIST_STACK_COUNT);
+
+		for (size_t ct = 0; ct < AT_TASK_CFG_LIST_STACK_COUNT; ct++) {						/* Destroy the lists of this group,total have _LIST_STACK_COUNT */
+			list_priority = *((void **)group_priority + ct);								/* Get the one list of the group */
+
+			size_priority_list = (at_task_size_t)at_task_os_task_list_package->capacity.
+				size(list_priority);														/* Get the size of the list */
+
+			for (size_t c = 0; c < size_priority_list; c++) {								/* Destroy the tasks in the list,total have size_priority_list */
+				task_priority_list = (void **)at_task_os_task_list_package->element_access.
+					top(list_priority);
+				at_task_control_task_configuration_destroy(&(struct at_task_s *)task_priority_list);
+
+				at_task_os_task_list_package->modifiers.pop(list_priority);
+			}
+		}
+																							/* TODO: put it into the above for loop */
+		at_task_os_task_list_package->configuration.										/* Destroy the stack */
 			destroy(&at_task_os.list_table[cnt].ready);
 		at_task_os_task_list_package->configuration.
 			destroy(&at_task_os.list_table[cnt].suspend);
 	}
+
+	return 0;
 }
 
 /**
@@ -296,7 +317,7 @@ void at_task_control_os_scheduler(void)
 
 	priority = at_task_control_os_inquire_highest_priority();   /* Get the highest priority */
 
-	task_ready = at_task_os_task_list_package->access.			/* Get the top task block of this priority ready list */
+	task_ready = at_task_os_task_list_package->element_access.	/* Get the top task block of this priority ready list */
 		top(at_task_os.list_table[priority].ready);
 
 	if (NULL == task_ready) {
@@ -426,7 +447,7 @@ at_task_control_task_configuration_suspend(struct at_task_s *task)
 
 	void *task_addr = NULL;
 
-	if (NULL == (task_addr = at_task_os_task_list_package->access.
+	if (NULL == (task_addr = at_task_os_task_list_package->element_access.
 				 top(at_task_os.list_table[task->info.priority].ready))) {
 		return 1;
 	}
@@ -460,7 +481,7 @@ at_task_control_task_configuration_resume(struct at_task_s *task)
 
 	void *task_addr = NULL;
 
-	if (NULL == (task_addr = at_task_os_task_list_package->access.
+	if (NULL == (task_addr = at_task_os_task_list_package->element_access.
 				 top(at_task_os.list_table[task->info.priority].suspend))) {
 		return 2;
 	}

@@ -16,7 +16,7 @@
 *********************************************************************************************************
 */
 
-#include "time_manage.h"
+#include "time_manage_def.h"
 
 /*
 *********************************************************************************************************
@@ -45,17 +45,17 @@
 
 struct clocker_control_s {
 	struct {
-		void (*init)(struct clocker_s **clocker,
-					 time_manage_size_t clocker_freq,
-					 struct time_manage_timer_package_s *timer_package);
+		errno_t(*init)(struct clocker_s **clocker,
+					   time_manage_size_t clocker_freq,
+					   struct time_manage_timer_package_s *timer_package);
 
-		void (*destroy)(struct clocker_s **clocker);
+        errno_t(*destroy)(struct clocker_s **clocker);
 
-		void (*calibrate)(struct clocker_s *clocker);
+		errno_t(*calibrate)(struct clocker_s *clocker);
 
-		void (*change_time_sources)(struct clocker_s *clocker,
-									void *timer,
-									struct time_manage_timer_package_s *timer_package);
+		errno_t(*change_time_sources)(struct clocker_s *clocker,
+									  void *timer,
+									  struct time_manage_timer_package_s *timer_package);
 	}configuration;
 
 	struct {
@@ -66,7 +66,7 @@ struct clocker_control_s {
 		struct time_manage_visual_time_frame_s(*visual_time_frame_type_record)(struct clocker_s *clocker);
 	}inquire;
 
-	void (*start)(struct clocker_s *clocker);
+	errno_t(*start)(struct clocker_s *clocker);
 
 	time_manage_size_t(*stop)(struct clocker_s *clocker);
 
@@ -91,9 +91,9 @@ struct clocker_control_s {
  * @return void
  */
 
-void cloker_control_configuration_init(struct clocker_s **clocker,
-									  time_manage_size_t clocker_freq,
-									  struct time_manage_timer_package_s *timer_package);
+errno_t cloker_control_configuration_init(struct clocker_s **clocker,
+										  time_manage_size_t clocker_freq,
+										  struct time_manage_timer_package_s *timer_package);
 
 /**
  * @brief This function will destroy the clocker.
@@ -103,7 +103,7 @@ void cloker_control_configuration_init(struct clocker_s **clocker,
  * @return void
  */
 
-void cloker_control_configuration_destroy(struct clocker_s **clocker);
+errno_t cloker_control_configuration_destroy(struct clocker_s **clocker);
 
 /**
  * @brief This function will calibrate the clocker to perform better.
@@ -113,7 +113,7 @@ void cloker_control_configuration_destroy(struct clocker_s **clocker);
  * @return void
  */
 
-void cloker_control_configuration_calibrate(struct clocker_s *clocker);
+errno_t cloker_control_configuration_calibrate(struct clocker_s *clocker);
 
 /**
  * @brief This function will change the timer of clocker.
@@ -123,9 +123,9 @@ void cloker_control_configuration_calibrate(struct clocker_s *clocker);
  * @return void
  */
 
-void cloker_control_configuration_change_timer_sources(struct clocker_s *clocker,
-													  void *timer,
-													  struct time_manage_timer_package_s *timer_package);
+errno_t cloker_control_configuration_change_timer_sources(struct clocker_s *clocker,
+														  void *timer,
+														  struct time_manage_timer_package_s *timer_package);
 
 /**
  * @brief This function will inquire the frequency of the timer.
@@ -155,8 +155,8 @@ time_manage_size_t cloker_control_inquire_clocker_freq(struct clocker_s *clocker
  * @return void
  */
 
-struct time_manage_visual_time_frame_s 
-    cloker_control_inquire_visual_time_frame_type_record(struct clocker_s *clocker);
+struct time_manage_visual_time_frame_s
+	cloker_control_inquire_visual_time_frame_type_record(struct clocker_s *clocker);
 
 /**
  * @brief This function will change the timer of clocker.
@@ -166,7 +166,7 @@ struct time_manage_visual_time_frame_s
  * @return void
  */
 
-void cloker_control_start(struct clocker_s *clocker);
+errno_t cloker_control_start(struct clocker_s *clocker);
 
 /**
  * @brief This function will change the timer of clocker.

@@ -4,9 +4,7 @@
 *********************************************************************************************************
 */
 
-#include "at_task_stack_template.h"
-
-#include "stack.h"
+#include "at_data_structure_template.h"
 
 /*
 *********************************************************************************************************
@@ -44,25 +42,27 @@
 *********************************************************************************************************
 */
 
+#ifdef __STACK_H
+
 /**
- * @brief This function will initialize the ready list of the at task os as a stack.
+ * @brief This function will initialize the ready list.
  *
  * @param void
  *
  * @return void
  */
 
-errno_t at_task_os_control_ready_list_init(void *arg);
+errno_t at_task_list_stack_package_configration_init(void *arg);
 
 /**
- * @brief This function will destroy the ready list of the at task os.
+ * @brief This function will destroy the ready list stack.
  *
  * @param void
  *
  * @return void
  */
 
-errno_t at_task_os_control_ready_list_destroy(void *arg);
+errno_t at_task_list_stack_package_configration_destroy(void *arg);
 
 /**
  * @brief This function will push the data as the top one of the stack.
@@ -72,8 +72,7 @@ errno_t at_task_os_control_ready_list_destroy(void *arg);
  * @return void
  */
 
-errno_t at_task_os_control_ready_list_push(void *arg,
-										   void *data);
+at_task_size_t at_task_list_stack_package_capacity_size(void *arg);
 
 /**
  * @brief This function will access the top element of the stack.
@@ -83,7 +82,17 @@ errno_t at_task_os_control_ready_list_push(void *arg,
  * @return void
  */
 
-void *at_task_os_control_ready_list_top(void *arg);
+void *at_task_list_stack_package_element_access_top(void *arg);
+
+/**
+ * @brief This function will push the data as the top one of the stack.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_task_list_stack_package_modifiers_push(void *arg, void *data);
 
 /**
  * @brief This function will pop the top element of the stack.
@@ -93,33 +102,41 @@ void *at_task_os_control_ready_list_top(void *arg);
  * @return void
  */
 
-errno_t at_task_os_control_ready_list_pop(void *arg);
+errno_t at_task_list_stack_package_modifiers_pop(void *arg);
+
+#endif // __STACK_H
 
 /*
 *********************************************************************************************************
 *					LOCAL GLOBAL VARIABLES & LOCAL FUNCTION PROTOTYPES INTERSECTION
 *********************************************************************************************************
 */
+#ifdef __STACK_H
 
 /**
- * @brief This struct will contain all the at task control functions.
+ * @brief This struct will contain all the at task list stack control functions.
  */
 
-struct at_task_data_structure_package_s ready_list_stack_package = {
-	.configuration.init = (at_import_func_t)at_task_os_control_ready_list_init,
-	.configuration.destroy = (at_import_func_t)at_task_os_control_ready_list_destroy,
+struct at_task_data_structure_package_s at_task_list_stack_package = {
+	.configuration.init = (at_import_func_t)at_task_list_stack_package_configration_init,
+	.configuration.destroy = (at_import_func_t)at_task_list_stack_package_configration_destroy,
 
-	.access.top = (at_import_func_t)at_task_os_control_ready_list_top,
+	.capacity.size = (at_import_func_t)at_task_list_stack_package_capacity_size,
 
-	.modifiers.push = (at_import_func_t)at_task_os_control_ready_list_push,
-	.modifiers.pop = (at_import_func_t)at_task_os_control_ready_list_pop,
+	.element_access.top = (at_import_func_t)at_task_list_stack_package_element_access_top,
+
+	.modifiers.push = (at_import_func_t)at_task_list_stack_package_modifiers_push,
+	.modifiers.pop = (at_import_func_t)at_task_list_stack_package_modifiers_pop,
 };
+
+#endif // __STACK_H
 
 /*
 *********************************************************************************************************
 *                                            FUNCTIONS
 *********************************************************************************************************
 */
+#ifdef __STACK_H
 
 /**
  * @brief This function will initialize the ready list.
@@ -130,7 +147,7 @@ struct at_task_data_structure_package_s ready_list_stack_package = {
  */
 
 static inline errno_t
-at_task_os_control_ready_list_init(void *arg)
+at_task_list_stack_package_configration_init(void *arg)
 {
 	stack_ctrl.configuration.init((struct stack_s **) arg,                       /* Initialize the data structure */
 								  FORWARD_LIST,
@@ -149,7 +166,7 @@ at_task_os_control_ready_list_init(void *arg)
  */
 
 static inline errno_t
-at_task_os_control_ready_list_destroy(void *arg)
+at_task_list_stack_package_configration_destroy(void *arg)
 {
 	stack_ctrl.configuration.destroy((struct stack_s **) arg);                   /* Destroy the data structure */
 
@@ -164,22 +181,19 @@ at_task_os_control_ready_list_destroy(void *arg)
  * @return void
  */
 
-static inline errno_t
-at_task_os_control_ready_list_push(void *arg, void *data)
+static inline at_task_size_t
+at_task_list_stack_package_capacity_size(void *arg)
 {
 	assert(arg);
 
-    #if (AT_TASK_DATA_STRUCTURE_CFG_DEBUG_EN)
+	#if (AT_TASK_DATA_STRUCTURE_CFG_DEBUG_EN)
 
 	printf("ready list %p .push:%p\r\n",
 		   arg, data);
 
-    #endif // (AT_TASK_DATA_STRUCTURE_CFG_DEBUG_EN)
+	#endif // (AT_TASK_DATA_STRUCTURE_CFG_DEBUG_EN)
 
-	stack_ctrl.modifiers.push((struct stack_s *)arg,
-							  &data);
-
-	return 0;
+	return (at_task_size_t)stack_ctrl.capacity.size((struct stack_s *)arg);
 }
 
 /**
@@ -191,7 +205,7 @@ at_task_os_control_ready_list_push(void *arg, void *data)
  */
 
 static inline void
-*at_task_os_control_ready_list_top(void *arg)
+*at_task_list_stack_package_element_access_top(void *arg)
 {
 	assert(arg);
 
@@ -206,9 +220,35 @@ static inline void
 	printf("ready list %p .top:%p \r\n",
 		   arg, *(void **)data);
 
-    #endif // (AT_TASK_DATA_STRUCTURE_CFG_DEBUG_EN)
+	#endif // (AT_TASK_DATA_STRUCTURE_CFG_DEBUG_EN)
 
 	return (*(void **)data);
+}
+
+/**
+ * @brief This function will push the data as the top one of the stack.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+static inline errno_t
+at_task_list_stack_package_modifiers_push(void *arg, void *data)
+{
+	assert(arg);
+
+	#if (AT_TASK_DATA_STRUCTURE_CFG_DEBUG_EN)
+
+	printf("ready list %p .push:%p\r\n",
+		   arg, data);
+
+	#endif // (AT_TASK_DATA_STRUCTURE_CFG_DEBUG_EN)
+
+	stack_ctrl.modifiers.push((struct stack_s *)arg,
+							  &data);
+
+	return 0;
 }
 
 /**
@@ -220,7 +260,7 @@ static inline void
  */
 
 static inline errno_t
-at_task_os_control_ready_list_pop(void *arg)
+at_task_list_stack_package_modifiers_pop(void *arg)
 {
 	assert(arg);
 
@@ -228,3 +268,5 @@ at_task_os_control_ready_list_pop(void *arg)
 
 	return 0;
 }
+
+#endif // __STACK_H
