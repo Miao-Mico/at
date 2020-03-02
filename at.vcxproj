@@ -145,6 +145,7 @@
     <ClCompile Include="AT\at.c" />
     <ClCompile Include="AT\at_device.c" />
     <ClCompile Include="AT\at_device_template.c" />
+    <ClCompile Include="AT\at_message.c" />
     <ClCompile Include="AT\at_task.c" />
     <ClCompile Include="AT\at_data_structure_template.c" />
     <ClCompile Include="AT\at_timeout.c" />
@@ -153,6 +154,7 @@
     <ClCompile Include="Container\compare.c" />
     <ClCompile Include="Container\forward_list.c" />
     <ClCompile Include="Container\list_family.c" />
+    <ClCompile Include="Container\queue.c" />
     <ClCompile Include="Container\sort.c" />
     <ClCompile Include="Container\stack.c" />
     <ClCompile Include="Container\vector.c" />
@@ -169,6 +171,7 @@
     <ClInclude Include="AT\at_def.h" />
     <ClInclude Include="AT\at_device.h" />
     <ClInclude Include="AT\at_device_template.h" />
+    <ClInclude Include="AT\at_message.h" />
     <ClInclude Include="AT\at_task.h" />
     <ClInclude Include="AT\at_data_structure_template.h" />
     <ClInclude Include="AT\at_timeout.h" />
@@ -184,6 +187,7 @@
     <ClInclude Include="Container\container_def.h" />
     <ClInclude Include="Container\forward_list.h" />
     <ClInclude Include="Container\list_family.h" />
+    <ClInclude Include="Container\queue.h" />
     <ClInclude Include="Container\sort.h" />
     <ClInclude Include="Container\stack.h" />
     <ClInclude Include="Container\vector.h" />
@@ -197,6 +201,7 @@
     <ClInclude Include="Time Manage\time_manage_timer_template.h" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="Container\_repo_stack_issue.txt" />
     <Text Include="Text\controller_receive.txt" />
     <Text Include="Text\controller_send.txt" />
     <Text Include="Text\peripheral_device_receive.txt" />

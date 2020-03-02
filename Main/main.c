@@ -9,6 +9,8 @@
 #include "time_manage_timer_template.h"
 #include "clocker.h"
 
+#include "at_message.h"																		/* Only for this git version,check if the at message is available */
+
 #define MAIN_CFG_CONTROLLER_SEND_TO_FILENAME												\
 	"./Text/peripheral_device_receive.txt"
 #define MAIN_CFG_CONTROLLER_RECEIVE_FROM_FILENAME											\
@@ -44,6 +46,46 @@ HANDLE thread_handle_hardware_layer = 0;
 void main(void)
 {
 	main_bsp_init();
+
+	at_message_ctrl.transmit.
+		deposit(1, 
+				"first transmit deposit.part 0", sizeof("first transmit deposit.part 0"));
+	at_message_ctrl.transmit.
+		deposit(3, 
+				"second transmit deposit.part 0", sizeof("second transmit deposit.part 0"),
+				"second transmit deposit.part 1", sizeof("second transmit deposit.part 1"),
+				"second transmit deposit.part 2", sizeof("second transmit deposit.part 2"));
+
+	struct at_message_transmit_group_s msg_grp = { 0 };
+
+	if (0 == (msg_grp = at_message_ctrl.transmit.load()).count) {
+		return;
+	}
+
+	printf("msg:\"%s\" \"%s\" \"%s\"\r\n", msg_grp.pool[0], msg_grp.pool[1], msg_grp.pool[2]);
+
+	if (0 == (msg_grp = at_message_ctrl.transmit.load()).count) {
+		return;
+	}
+
+	printf("msg:\"%s\" \"%s\" \"%s\"\r\n", msg_grp.pool[0], msg_grp.pool[1], msg_grp.pool[2]);
+
+	at_message_ctrl.feedback.deposit("first feedback deposit", sizeof("first feedback deposit"));
+	at_message_ctrl.feedback.deposit("second feedback deposit", sizeof("second feedback deposit"));
+
+	char *msg = NULL;
+
+	if (NULL == (msg = at_message_ctrl.feedback.load())) {
+		return;
+	}
+
+	printf("msg:\"%s\"\r\n", msg);
+
+	if (NULL == (msg = at_message_ctrl.feedback.load())) {
+		return;
+	}
+
+	printf("msg:\"%s\"\r\n", msg);
 
 	clocker_ctrl.start(clocker);
 

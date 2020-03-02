@@ -10,6 +10,7 @@ This suite contains several significant parts:
 - *at_device*
 - *at_data_structure*
 - *at_timeout*
+- at_message
 - some inspiration ...
 
 Those  *italic* part support for customization, this means if you feel it not very well, you can drop the default template writing by me to make full use of what you already have. Let we do that.
@@ -44,6 +45,27 @@ Those  *italic* part support for customization, this means if you feel it not ve
 
   Yep, you can also pack the timer in a `package`, to define your timeout.
 
+- ### at_message
+
+  This part will let `the message storage` under the command of `the data structure` you select, combining with the at_data_structure. 
+
+  There have two message storage pool in the at:
+
+  - transmit message pool
+
+    I recommend to use `the queue structure`, because it's `FIFO` feature.
+
+    It now appears that the transmit, it works like `an assembly line`.
+
+  - feedback message pool
+
+    About this pool, how about `the stack structure` and it's `FILO` feature?
+
+    It is `more important` that `the message receive now`, it may break out suddenly because your initiative communication, than `the message some much more older`.
+
 ## FAQ
 
 ## License
+
+[Apache License 2.0]: https://github.com/Miao-Mico/at/blob/master/LICENSE
+

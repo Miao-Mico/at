@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -50,6 +51,15 @@ typedef AT_TASK_CFG_SIZE_TYPE at_task_size_t;
 typedef void *(*at_import_func_t)(void *arg_list, ...);
 
 /**
+ * @brief This type is the typedef of the at transmit message group.
+ */
+
+struct at_message_transmit_group_s {
+	at_size_t count;
+	char *pool[AT_CFG_TRANSMIT_LEVEL_MAX];
+};
+
+/**
  * @brief This typedef will extern the type of at.
  */
 
@@ -58,15 +68,7 @@ typedef struct at_s
 **at_stpp;
 
 /**
- * @brief This typedef will extern the type of at feedback thread.
- */
-
-typedef struct at_feedback_thread_s
-*at_feedback_thread_stp,
-**at_feedback_thread_stpp;
-
-/**
- * @brief This struct will contain all the universal vector functions address.
+ * @brief This struct will contain all the universal device functions.
  */
 
 struct at_device_package_s {
@@ -112,7 +114,7 @@ typedef errno_t(*at_device_package_packer_func_t)(struct at_device_package_s **p
  * @brief This struct will contain all the at task control functions.
  */
 
-struct at_task_data_structure_package_s {
+struct at_data_structure_package_s {
 	struct {
 		at_import_func_t init;
 		at_import_func_t destroy;

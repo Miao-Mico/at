@@ -20,6 +20,7 @@
 
 /* Data Structure Include file																		    */
 #include "stack.h"
+#include "queue.h"
 
 /*
 *********************************************************************************************************
@@ -54,14 +55,29 @@
  * @brief This struct will contain all the at task list stack control functions.
  */
 
-extern struct at_task_data_structure_package_s at_task_list_stack_package;
+extern struct at_data_structure_package_s at_list_stack_package;
 
 #else
 
-#error  "Please transplant a good data structure package fit the data structure that at need! \
+#error  "Please transplant a good data structure package fit the data structure that at needs \
             They are the stack!"
 
 #endif // __STACK_H
+
+#ifdef __QUEUE_H
+
+/**
+ * @brief This struct will contain all the at task list stack control functions.
+ */
+
+extern struct at_data_structure_package_s at_list_queue_package;
+
+#else
+
+#error  "Please transplant a good data structure package fit the data structure that at needs \
+            They are the queue!"
+
+#endif // __QUEUE_H
 
 /*
 *********************************************************************************************************

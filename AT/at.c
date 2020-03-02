@@ -7,6 +7,7 @@
 #include "at.h"
 
 #include "at_device.h"
+#include "at_message.h"
 #include "at_task.h"
 
 /*
@@ -33,56 +34,6 @@
 
 struct at_information_s {
 	bool switch_status;
-
-	char transmit_end_with[AT_CFG_CACHE_LEVEL_AMT][AT_CFG_END_WITH_STRING_LEN];
-};
-
-/**
- * @brief This struct will contain all the universal vector functions address.
- */
-
-struct at_transmit_s {
-	short cache_amt;
-	short cache_level_amt;
-	short crt_ist;
-	short cache_level[AT_CFG_CACHE_AMT];
-	char cache[AT_CFG_CACHE_AMT][AT_CFG_CACHE_LEVEL_AMT][100];
-};
-
-/**
- * @brief This struct will contain all the universal vector functions address.
- */
-
-struct at_feedback_thread_s {
-	struct at_feedback_thread_information_s {
-		char *thread_name;													// 方便 log
-		float verify_pass_threshold_value;									// 阈值
-
-		bool switch_status;													// 开关
-		int verify_pass;													// 是否验证通过
-		bool result_locked;													//
-		char(*verify_rule)[AT_CFG_FEEDBACK_VERIFY_THREAD_MAX_RULE_LENGTH];	// 验证规则
-		short verify_amount;
-	}info;
-
-	void (*process)(struct AT_Feedback_Verify_Thread_Module *module_t);
-	void (*verify_pass_callback)(void);										// 回调函数
-	void (*verify_fail_callback)(void);										// 回调函数
-};
-
-/**
- * @brief This struct will contain all the universal vector functions address.
- */
-
-struct at_feedback_s {
-	short handle_priority;
-	struct at_feedback_thread_s *handle_thread;
-
-	short amount_inited_thread;							// 初始化的线程
-	short amount_max_thread;							// 最大线程数
-
-	struct at_feedback_thread_s *thread_ptr[AT_CFG_FEEDBACK_VERIFY_THREAD_AMOUNT];
-	bool thread_actived[AT_CFG_FEEDBACK_VERIFY_THREAD_AMOUNT];
 };
 
 /**
@@ -101,10 +52,6 @@ struct at_s {
 	struct at_information_s info;
 
 	struct at_device_package_s *device_package;
-
-	struct at_transmit_s transmit;
-
-	struct at_feedback_s feedback;
 
 	struct at_exception_s exception;
 };
@@ -172,6 +119,8 @@ errno_t at_control_configuration_init(struct at_s **at,
 		return 1;
 	}
 
+	at_message_ctrl.configuration.init();																		/* Initialize the at message */
+
 	at_task_ctrl.os.configuration.init();																		/* Initialize the at task os */
 
 	at_task_ctrl.task.configuration.init(&at_task_os_multi_level_transmit_task,									/* Initialize the multi level transmit task */
@@ -204,8 +153,12 @@ errno_t at_control_configuration_destroy(struct at_s **at)
 	assert(at);
 	assert(*at);
 
-	if (at_task_ctrl.os.configuration.destroy()) {											/* Destroy the at tack os */
+	if (at_message_ctrl.configuration.destroy()) {											/* Destroy the at message */
 		return 1;
+	}
+
+	if (at_task_ctrl.os.configuration.destroy()) {											/* Destroy the at tack os */
+		return 2;
 	}
 
 	free(*at);

@@ -76,7 +76,6 @@ struct at_task_info_s {
 	enum at_task_status_e status;
 
 	char *name;
-	at_task_size_t name_len;
 
 	at_task_size_t priority;
 };
@@ -121,7 +120,7 @@ struct at_task_s *at_task_os_idle_task;
  * @brief This struct is the body of at task os.
  */
 
-struct at_task_data_structure_package_s *at_task_os_task_list_package =
+struct at_data_structure_package_s *at_task_os_task_list_package =
 	&AT_TASK_CFG_USER_DEFINED_READY_LIST_DATA_STRUCTURE;
 
 /**
@@ -400,7 +399,6 @@ errno_t at_task_control_task_configuration_init(struct at_task_s **task,
 	}
 
 	(*task)->info.name = name;
-	(*task)->info.name_len = 0;
 	(*task)->info.priority = priority;
 
 	(*task)->function = func;

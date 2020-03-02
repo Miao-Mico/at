@@ -99,6 +99,12 @@
     <ClCompile Include="AT\at_timeout.c">
       <Filter>源文件\at</Filter>
     </ClCompile>
+    <ClCompile Include="AT\at_message.c">
+      <Filter>源文件\at</Filter>
+    </ClCompile>
+    <ClCompile Include="Container\queue.c">
+      <Filter>源文件\container</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AT\at.h">
@@ -194,6 +200,12 @@
     <ClInclude Include="AT\at_timeout.h">
       <Filter>头文件\at</Filter>
     </ClInclude>
+    <ClInclude Include="AT\at_message.h">
+      <Filter>头文件\at</Filter>
+    </ClInclude>
+    <ClInclude Include="Container\queue.h">
+      <Filter>头文件\container</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Text\controller_receive.txt">
@@ -207,6 +219,9 @@
     </Text>
     <Text Include="Text\peripheral_device_send.txt">
       <Filter>源文件\text</Filter>
+    </Text>
+    <Text Include="Container\_repo_stack_issue.txt">
+      <Filter>源文件\container</Filter>
     </Text>
   </ItemGroup>
 </Project>
