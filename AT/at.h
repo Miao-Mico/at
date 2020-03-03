@@ -45,20 +45,18 @@ struct at_control_s {
 						   void *device,
 						   void *arg_list,
 						   struct at_device_package_s *device_package);
-
-		errno_t(*transmit_tail)(short level, char *transmit_end_with, ...);
 	}configuration;
 
 	struct {
-		errno_t(*windows)(void);
-	}device;
-
-	struct {
-		void (*single_level)(short param_amt, char *ist, ...);
+		errno_t(*single_level_send)(struct at_s *at,
+									at_size_t count, char *ist, ...);
 
 		struct {
-			void (*generate)(char *param_info, char *ist, ...);
-			void (*transmit)(short level);
+			errno_t(*generate)(struct at_s *at,
+							   char *format, char *ist, ...);
+
+			errno_t(*send)(struct at_s *at,
+						   at_size_t level);
 		} multi_level;
 	}transmit;
 
@@ -107,6 +105,39 @@ errno_t at_control_configuration_retarget(struct at_s *at,
 										  void *device,
 										  void *arg_list,
 										  struct at_device_package_s *device_package);
+
+/**
+ * @brief This function will generate then send the message through the device of at.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_control_transmit_single_level_send(struct at_s *at,
+											  at_size_t count, char *ist, ...);
+
+/**
+ * @brief This function will generate the at instruction through the format string.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_control_transmit_multi_level_generate(struct at_s *at,
+												 char *format, char *ist, ...);
+
+/**
+ * @brief This function will send the message load from the transmit message pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_control_transmit_multi_level_send(struct at_s *at,
+											 at_size_t level);
 
 /*
 *********************************************************************************************************

@@ -36,22 +36,24 @@
 
 struct at_message_control_s {
 	struct {
-		errno_t(*init)(void);
+		errno_t(*init)(struct at_message_s **message);
 
-		errno_t(*destroy)(void);
+		errno_t(*destroy)(struct at_message_s **message);
 	}configuration;
 
 	struct {
-		errno_t(*deposit)(at_size_t cnt,
-						  void *msg, at_size_t len, ...);
+		errno_t(*deposit)(struct at_message_s *message,
+                          at_size_t cnt,
+						  void *str, at_size_t len, ...);
 
-        struct at_message_transmit_group_s(*load)(void);
+        struct at_message_transmit_group_s(*load)(struct at_message_s *message);
 	}transmit;
 
 	struct {
-		errno_t(*deposit)(void *msg, at_size_t len);
+		errno_t(*deposit)(struct at_message_s *message,
+                          void *str, at_size_t len);
 
-		void *(*load)(void);
+		void *(*load)(struct at_message_s *message);
 	}feedback;
 };
 
@@ -69,7 +71,7 @@ struct at_message_control_s {
  * @return void
  */
 
-errno_t at_message_control_configuration_init(void);
+errno_t at_message_control_configuration_init(struct at_message_s **message);
 
 /**
  * @brief This function will destroy the at message pool.
@@ -79,7 +81,7 @@ errno_t at_message_control_configuration_init(void);
  * @return void
  */
 
-errno_t at_message_control_configuration_destroy(void);
+errno_t at_message_control_configuration_destroy(struct at_message_s **message);
 
 /**
  * @brief This function will deposit the at message into the at message pool for transmit.
@@ -89,8 +91,9 @@ errno_t at_message_control_configuration_destroy(void);
  * @return void
  */
 
-errno_t at_message_control_transmit_deposit(at_size_t cnt,
-											void *msg, at_size_t len, ...);
+errno_t at_message_control_transmit_deposit(struct at_message_s *message,
+                                            at_size_t cnt,
+											void *str, at_size_t len, ...);
 
 /**
  * @brief This function will load the at message from the at message pool for transmit.
@@ -100,7 +103,7 @@ errno_t at_message_control_transmit_deposit(at_size_t cnt,
  * @return void
  */
 
-struct at_message_transmit_group_s at_message_control_transmit_load(void);
+struct at_message_transmit_group_s at_message_control_transmit_load(struct at_message_s *message);
 
 /**
  * @brief This function will deposit the at message into the at message pool for feedback.
@@ -110,7 +113,8 @@ struct at_message_transmit_group_s at_message_control_transmit_load(void);
  * @return void
  */
 
-errno_t at_message_control_feedback_deposit(void *msg,
+errno_t at_message_control_feedback_deposit(struct at_message_s *message,
+                                            void *str,
 											at_size_t len);
 
 /**
@@ -121,7 +125,7 @@ errno_t at_message_control_feedback_deposit(void *msg,
  * @return void
  */
 
-void *at_message_control_feedback_load(void);
+void *at_message_control_feedback_load(struct at_message_s *message);
 
 /*
 *********************************************************************************************************

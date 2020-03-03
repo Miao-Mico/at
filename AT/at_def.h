@@ -56,6 +56,7 @@ typedef void *(*at_import_func_t)(void *arg_list, ...);
 
 struct at_message_transmit_group_s {
 	at_size_t count;
+
 	char *pool[AT_CFG_TRANSMIT_LEVEL_MAX];
 };
 

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <windows.h>
 #include <process.h>
+#include <time.h>
 
 #include "at.h"
 #include "at_device_template.h"
@@ -25,7 +26,7 @@
 	1000000
 
 void main_bsp_init(void);
-size_t __stdcall main_hardware_layer(PVOID pM);
+size_t __stdcall main_hardware_layer(PVOID arg);
 void main_software_layer(void);
 
 size_t get_rand_delay_time(void);
@@ -47,55 +48,32 @@ void main(void)
 {
 	main_bsp_init();
 
-	at_message_ctrl.transmit.
-		deposit(1, 
-				"first transmit deposit.part 0", sizeof("first transmit deposit.part 0"));
-	at_message_ctrl.transmit.
-		deposit(3, 
-				"second transmit deposit.part 0", sizeof("second transmit deposit.part 0"),
-				"second transmit deposit.part 1", sizeof("second transmit deposit.part 1"),
-				"second transmit deposit.part 2", sizeof("second transmit deposit.part 2"));
-
-	struct at_message_transmit_group_s msg_grp = { 0 };
-
-	if (0 == (msg_grp = at_message_ctrl.transmit.load()).count) {
-		return;
-	}
-
-	printf("msg:\"%s\" \"%s\" \"%s\"\r\n", msg_grp.pool[0], msg_grp.pool[1], msg_grp.pool[2]);
-
-	if (0 == (msg_grp = at_message_ctrl.transmit.load()).count) {
-		return;
-	}
-
-	printf("msg:\"%s\" \"%s\" \"%s\"\r\n", msg_grp.pool[0], msg_grp.pool[1], msg_grp.pool[2]);
-
-	at_message_ctrl.feedback.deposit("first feedback deposit", sizeof("first feedback deposit"));
-	at_message_ctrl.feedback.deposit("second feedback deposit", sizeof("second feedback deposit"));
-
-	char *msg = NULL;
-
-	if (NULL == (msg = at_message_ctrl.feedback.load())) {
-		return;
-	}
-
-	printf("msg:\"%s\"\r\n", msg);
-
-	if (NULL == (msg = at_message_ctrl.feedback.load())) {
-		return;
-	}
-
-	printf("msg:\"%s\"\r\n", msg);
-
 	clocker_ctrl.start(clocker);
+
+	time_t time_T = time(NULL);
+	char strTime[100];
+
+	strftime(strTime, sizeof(strTime), "%Y-%m-%d %H:%M:%S", localtime(&time_T));			/* Get the timestamp string */
+
+	printf("Time is :%s\n", strTime);
+	
+	if (at_ctrl.transmit.multi_level.generate(at, "#2:3:1", "Just Test:",  strTime,".","Level 2.")) {
+		return;
+	}
+	if (at_ctrl.transmit.multi_level.send(at, 0)) {
+		return;
+	}
+	if (at_ctrl.transmit.multi_level.send(at, 1)) {
+		return;
+	}
+
+	printf("have cost: %lldus \r\n", clocker_ctrl.stop(clocker));
 
 	WaitForSingleObject(thread_handle_hardware_layer, INFINITE);							/* Wait the hardware layer run at least once */
 
 	while (false) {
 		main_software_layer();
 	}
-
-	printf("have cost: %lldus \r\n", clocker_ctrl.stop(clocker));
 
 	at_windows_peripheral_package->configuration.demount(at_windows_peripheral_package);
 
@@ -134,7 +112,7 @@ void main_bsp_init(void)																	/* Board Support Package and AT Initial
 	}
 }
 
-size_t __stdcall main_hardware_layer(PVOID pM)												/* Simulate the peripheral device random communications */
+size_t __stdcall main_hardware_layer(PVOID arg)												/* Simulate the peripheral device random communications */
 {
 	printf("hardware thread operate\r\n");
 
@@ -147,7 +125,7 @@ size_t __stdcall main_hardware_layer(PVOID pM)												/* Simulate the periph
 	return 0;
 }
 
-void main_software_layer(void)															/* Simulate the soft logic of controller device or sever */
+void main_software_layer(void)																/* Simulate the soft logic of controller device or sever */
 {
 }
 
@@ -155,11 +133,11 @@ size_t get_rand_delay_time(void)
 {
 	LARGE_INTEGER seed = { 0 };
 
-	QueryPerformanceCounter(&seed);														/* Generate the seed by the windows counter */
+	QueryPerformanceCounter(&seed);															/* Generate the seed by the windows counter */
 
 	srand((size_t)seed.QuadPart);
 
-	return (rand() % 10 + 1);															/* Get random time between 1 and 10 */
+	return (rand() % 10 + 1);																/* Get random time between 1 and 10 */
 }
 
 char *controller_file_name[4] = {

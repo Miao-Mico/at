@@ -47,12 +47,6 @@ struct at_message_s {
 */
 
 /**
- * @brief This struct is the body of at message.
- */
-
-struct at_message_s at_message;
-
-/**
  * @brief This struct will contain all the at task list stack control functions.
  */
 
@@ -106,15 +100,21 @@ struct at_message_control_s at_message_ctrl = {
  * @return void
  */
 
-errno_t at_message_control_configuration_init(void)
+errno_t at_message_control_configuration_init(struct at_message_s **message)
 {
+	assert(message);
+
+	if (NULL == ((*message) = calloc(1, sizeof(struct at_message_s)))) {
+		return -1;
+	}
+
 	if (at_message_transmit_list_queue_package->configuration.
-		init(&at_message.transmit_queue)) {
+		init(&(*message)->transmit_queue)) {
 		return 1;
 	}
 
 	if (at_message_feedback_list_stack_package->configuration.
-		init(&at_message.feedback_stack)) {
+		init(&(*message)->feedback_stack)) {
 		return 2;
 	}
 
@@ -129,15 +129,18 @@ errno_t at_message_control_configuration_init(void)
  * @return void
  */
 
-errno_t at_message_control_configuration_destroy(void)
+errno_t at_message_control_configuration_destroy(struct at_message_s **message)
 {
+	assert(message);
+	assert(*message);
+
 	if (at_message_transmit_list_queue_package->configuration.
-		destroy(&at_message.transmit_queue)) {
+		destroy(&(*message)->transmit_queue)) {
 		return 1;
 	}
 
 	if (at_message_feedback_list_stack_package->configuration.
-		destroy(&at_message.feedback_stack)) {
+		destroy(&(*message)->feedback_stack)) {
 		return 2;
 	}
 
@@ -152,7 +155,8 @@ errno_t at_message_control_configuration_destroy(void)
  * @return void
  */
 
-errno_t at_message_control_transmit_deposit(at_size_t cnt, void *msg, at_size_t len, ...)
+errno_t at_message_control_transmit_deposit(struct at_message_s *message,
+											at_size_t cnt, void *str, at_size_t len, ...)
 {
 	assert(AT_CFG_TRANSMIT_LEVEL_MAX >= cnt);
 
@@ -162,33 +166,31 @@ errno_t at_message_control_transmit_deposit(at_size_t cnt, void *msg, at_size_t 
 		return -1;
 	}
 
+	msg_grp->count = cnt;
+
 	va_list va_ptr;
+	char *msg_cpy = NULL;
+	at_size_t ct = 0;
 
 	va_start(va_ptr, len);
 
-	char *msg_cpy = NULL;
-
-	msg_grp->count = cnt;
-
-	at_size_t ct = 0;
-
 	do {
-		if (NULL == (msg_cpy = calloc(1, len))) {
+		if (NULL == (msg_cpy = calloc(1, len + 1))) {										/* Retain a bit for '\0' */
 			return -2;
 		}
-		if (!memcpy(msg_cpy, msg, len)) {
+		if (!memcpy(msg_cpy, str, len)) {
 			return 1;
 		}
 
 		msg_grp->pool[ct++] = msg_cpy;
-	} while (ct < cnt && 
-			 (msg = va_arg(va_ptr, void *),
-			 len = va_arg(va_ptr, size_t)));
-	
+	} while (ct < cnt &&
+		(str = va_arg(va_ptr, void *),
+		 len = va_arg(va_ptr, size_t)));
+
 	va_end(va_ptr);
 
 	if (at_message_transmit_list_queue_package->modifiers.
-		push(at_message.transmit_queue, msg_grp)) {											/* Push the msg group into the queue */
+		push(message->transmit_queue, msg_grp)) {											/* Push the str group into the queue */
 		return 2;
 	}
 
@@ -203,21 +205,25 @@ errno_t at_message_control_transmit_deposit(at_size_t cnt, void *msg, at_size_t 
  * @return void
  */
 
-struct at_message_transmit_group_s at_message_control_transmit_load(void)
+struct at_message_transmit_group_s at_message_control_transmit_load(struct at_message_s *message)
 {
-	struct at_message_transmit_group_s *msg_grp = NULL;
+	struct at_message_transmit_group_s
+		msg_grp = { 0 },
+		*msg_grp_ptr = NULL;
 
-	if (NULL == (msg_grp = at_message_transmit_list_queue_package->element_access.
-				 top(at_message.transmit_queue))) {
+	if (NULL == (msg_grp_ptr = at_message_transmit_list_queue_package->element_access.
+				 top(message->transmit_queue))) {
 		return (struct at_message_transmit_group_s) { 0, NULL, NULL, NULL };
 	}
+
+	msg_grp = *msg_grp_ptr;
 
 	if (at_message_transmit_list_queue_package->modifiers.
-		pop(at_message.transmit_queue)) {
+		pop(message->transmit_queue)) {
 		return (struct at_message_transmit_group_s) { 0, NULL, NULL, NULL };
 	}
 
-	return *msg_grp;
+	return msg_grp;
 }
 
 /**
@@ -228,7 +234,8 @@ struct at_message_transmit_group_s at_message_control_transmit_load(void)
  * @return void
  */
 
-errno_t at_message_control_feedback_deposit(void *msg, at_size_t len)
+errno_t at_message_control_feedback_deposit(struct at_message_s *message,
+											void *str, at_size_t len)
 {
 	void *msg_cpy = NULL;
 
@@ -236,12 +243,12 @@ errno_t at_message_control_feedback_deposit(void *msg, at_size_t len)
 		return -1;
 	}
 
-	if (!memcpy(msg_cpy, msg, len)) {
+	if (!memcpy(msg_cpy, str, len)) {
 		return 1;
 	}
 
 	if (at_message_feedback_list_stack_package->modifiers.
-		push(at_message.feedback_stack, msg_cpy)) {
+		push(message->feedback_stack, msg_cpy)) {
 		return 2;
 	}
 
@@ -256,19 +263,19 @@ errno_t at_message_control_feedback_deposit(void *msg, at_size_t len)
  * @return void
  */
 
-void *at_message_control_feedback_load(void)
+void *at_message_control_feedback_load(struct at_message_s *message)
 {
-	void *msg = NULL;
+	void *str = NULL;
 
-	if (NULL == (msg = at_message_feedback_list_stack_package->element_access.
-				 top(at_message.feedback_stack))) {
+	if (NULL == (str = at_message_feedback_list_stack_package->element_access.
+				 top(message->feedback_stack))) {
 		return NULL;
 	}
 
 	if (at_message_feedback_list_stack_package->modifiers.
-		pop(at_message.feedback_stack)) {
+		pop(message->feedback_stack)) {
 		return NULL;
 	}
 
-	return msg;
+	return str;
 }
