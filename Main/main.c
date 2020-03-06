@@ -25,7 +25,7 @@
 #define MAIN_CFG_CLOCKER_FREQUENCY															\
 	1000000
 
-void main_bsp_init(void);
+void main_platform_support_package_init(void);
 size_t __stdcall main_hardware_layer(PVOID arg);
 void main_software_layer(void);
 
@@ -46,32 +46,38 @@ HANDLE thread_handle_hardware_layer = 0;
 
 void main(void)
 {
-	main_bsp_init();
+	void *priority_queue = NULL;
+
+	at_list_priority_queue_package.configuration.init(&priority_queue);
+
+	char
+		*first = "first",
+		*second = "second",
+		*third = "third";
+
+	at_list_priority_queue_package.modifiers.push(priority_queue, first);
+	at_list_priority_queue_package.modifiers.push(priority_queue, third);
+	at_list_priority_queue_package.modifiers.push(priority_queue, second);
+
+	printf("top is:\"%s\"\r\n",
+		(char *)at_list_priority_queue_package.element_access.top(priority_queue));
+
+	at_list_priority_queue_package.modifiers.pop(priority_queue);
+
+	printf("top is:\"%s\"\r\n",
+		(char *)at_list_priority_queue_package.element_access.top(priority_queue));
+
+	at_list_priority_queue_package.configuration.destroy(&priority_queue);
+
+	main_platform_support_package_init();
 
 	clocker_ctrl.start(clocker);
-
-	time_t time_T = time(NULL);
-	char strTime[100];
-
-	strftime(strTime, sizeof(strTime), "%Y-%m-%d %H:%M:%S", localtime(&time_T));			/* Get the timestamp string */
-
-	printf("Time is :%s\n", strTime);
-	
-	if (at_ctrl.transmit.multi_level.generate(at, "#2:3:1", "Just Test:",  strTime,".","Level 2.")) {
-		return;
-	}
-	if (at_ctrl.transmit.multi_level.send(at, 0)) {
-		return;
-	}
-	if (at_ctrl.transmit.multi_level.send(at, 1)) {
-		return;
-	}
 
 	printf("have cost: %lldus \r\n", clocker_ctrl.stop(clocker));
 
 	WaitForSingleObject(thread_handle_hardware_layer, INFINITE);							/* Wait the hardware layer run at least once */
 
-	while (false) {
+	while (true) {
 		main_software_layer();
 	}
 
@@ -84,7 +90,7 @@ void main(void)
 	return;
 }
 
-void main_bsp_init(void)																	/* Board Support Package and AT Initialization */
+void main_platform_support_package_init(void)												/* Platform Support Package and AT Initialization */
 {
 	errno_t error = 0;
 
@@ -127,6 +133,8 @@ size_t __stdcall main_hardware_layer(PVOID arg)												/* Simulate the perip
 
 void main_software_layer(void)																/* Simulate the soft logic of controller device or sever */
 {
+	at_ctrl.device_interrupt(at);															/* Device hardware interrupt */
+	at_ctrl.task_os_tick(at);																/* Task os soft tick */
 }
 
 size_t get_rand_delay_time(void)

@@ -7,8 +7,8 @@
 *********************************************************************************************************
 */
 
-#ifndef __SORT_H
-#define __SORT_H
+#ifndef __CONTAINER_ADAPOTR_PRIVITE_DEFINITION_H
+#define __CONTAINER_ADAPOTR_PRIVITE_DEFINITION_H
 
 /*
 *********************************************************************************************************
@@ -16,9 +16,7 @@
 *********************************************************************************************************
 */
 
-#include "algorithm_def.h"
-
-#include "compare.h"
+#include "container_def.h"
 
 /*
 *********************************************************************************************************
@@ -26,7 +24,29 @@
 *********************************************************************************************************
 */
 
-#define SORT_ALGORITHM_CFG_DEBUG_EN										0
+/**
+ * @brief This struct is the container adaptor structure.
+ */
+
+struct container_adaptor_s {
+	/* @brief RESERVED This variables will record the identity code of container_ptr type.				*/
+	enum container_type_e	container_type_id;
+
+	/* @brief This variables will point to the allocator_ptr control.									*/
+	struct allocator_control_s *allocator_control_ptr;
+
+	/* @brief This variables will point to the allocator_ptr.											*/
+	void *allocator_ptr;
+
+	/* @brief This variables will point to the function address table of front container_ptr type.		*/
+	struct container_control_s *container_control_ptr;
+
+	/* @brief This variables will point to the container_ptr.											*/
+	void *container_ptr;
+
+	/* @brief This variables will be a external addon, validity only depends on memory allocation.		*/
+	char addon[0];
+};
 
 /*
 *********************************************************************************************************
@@ -34,50 +54,11 @@
 *********************************************************************************************************
 */
 
-/**
-* @brief This struct will contain the necessary information that sort needed.
-*/
-
-struct sort_package_s {
-	void *object;
-
-	size_t len;
-	size_t mem_len;
-
-	void *(*get_value_method)(void *object, size_t loc);
-
-	void (*swap_method)(void *object, size_t lhs, size_t rhs);
-
-	compare_t compare_method;
-};
-
 /*
 *********************************************************************************************************
 *								            FUNCTION PROTOTYPES
 *********************************************************************************************************
 */
-
-/**
-* @brief This function will return the specified sort algorithm's function address.
-*
-* @param data the pointer to the data list will give
-*
-* @return the specified sort algorithm's function address
-*/
-
-void *sort_algorithm_control_convert_type_to_func_addr(enum sort_algorithm_type type);
-
-/**
-* @brief This function will sort the object by the comp and the sort algorithm is distinguished by
-*		   the sort_algorithm_addr that will get by xxx_convert_type_to_func_addr_table().
-*
-* @param data the pointer to the data list will give
-*
-* @return void
-*/
-
-void sort_algorithm_control(void *sort_algorithm_addr,
-							struct sort_package_s sort_package, compare_t comp);
 
 /*
 *********************************************************************************************************
@@ -91,4 +72,4 @@ void sort_algorithm_control(void *sort_algorithm_addr,
 *********************************************************************************************************
 */
 
-#endif // !__SORT_H
+#endif // !__CONTAINER_ADAPOTR_PRIVITE_DEFINITION_H

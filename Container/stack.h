@@ -16,7 +16,7 @@
 *********************************************************************************************************
 */
 
-#include "container_adaptor_family.h"
+#include "container_adaptor_def.h"
 
 /*
 *********************************************************************************************************
@@ -31,7 +31,7 @@
 #define STACK_CFG_ALLOCATOR_TYPE                                ALLOCATOR_COMMON
 
 /* Configure    if enable integrated structure.                                                         */
-#define STACK_CFG_INTERGRATED_STRUCTURE_MODE_EN			        1u
+#define STACK_CFG_INTEGRATED_STRUCTURE_MODE_EN			        1u
 
 /* Configure    if enable stack debug.																    */
 #define STACK_CFG_DEBUG_EN										0u
@@ -42,64 +42,72 @@
 *********************************************************************************************************
 */
 
-/* Configure    vector ptr type.                                                                        */
-typedef struct stack_s *STACK_TYPEDEF_PTR;
+/**
+ * @brief This type is the priority queue structure typedef.
+ */
 
-/* Configure    vector pptr type.                                                                       */
-typedef struct stack_s **STACK_TYPEDEF_PPTR;
+typedef struct container_adaptor_s
+*stack_stp,
+**stack_stpp;
+
+/**
+ * @brief This type will contain all the stack control functions.
+ */
 
 struct stack_control_s {
 	struct {
-		/* @brief This function will initialize the stack struct and the specified container. */
-		void (*init)(STACK_TYPEDEF_PPTR stack,
-					 enum container_type_e type,
-					 container_size_t element_size,
-					 void (*assign)(void *dst, void *src), void (*free)(void *dst));
+		/* @brief This function will initialize the stack struct and the specified container.           */
+		errno_t(*init)(stack_stpp stack,
+					   enum container_type_e container_type,
+					   container_size_t element_size,
+					   generic_type_element_assign_t assign,
+					   generic_type_element_free_t free);
 
-		/* @brief This function will initialize the stack struct and attach to the specified container. */
-		void (*attach)(STACK_TYPEDEF_PPTR stack,
-					   enum container_type_e type, void *container);
+		  /* @brief This function will initialize the stack struct and attach to the specified container. */
+		errno_t(*adapt)(stack_stpp stack,
+						void *container);
 
-		/* @brief This function will destroy the stack struct. */
-		void (*destroy)(STACK_TYPEDEF_PPTR stack);
+		 /* @brief This function will destroy the stack struct.                                          */
+		errno_t(*destroy)(stack_stpp stack);
 	}configuration;
 
 	struct {
-		/* @brief This function will return reference to the top element in the stack. */
-		void *(*top)(STACK_TYPEDEF_PTR stack);
+		/* @brief This function will return reference to the top element in the stack.                  */
+		void *(*top)(stack_stp stack);
 	}element_access;
 
 	struct {
-		/* @brief This function will check if the underlying container has no elements. */
-		bool(*empty)(STACK_TYPEDEF_PTR stack);
+		/* @brief This function will check if the underlying container has no elements.                 */
+		bool(*empty)(stack_stp stack);
 
-		/* @brief This function will returns the number of elements in the container. */
-		size_t(*size)(STACK_TYPEDEF_PTR stack);
+		/* @brief This function will returns the number of elements in the container.                   */
+		size_t(*size)(stack_stp stack);
 
 		/* @brief This function will returns the maximum number of elements
-					the container is able to hold due to system or library implementation limitations. */
-		size_t(*max_size)(STACK_TYPEDEF_PTR stack);
+					the container is able to hold due to system or library implementation limitations.  */
+		size_t(*max_size)(stack_stp stack);
 	}capacity;
 
 	struct {
-		/* @brief This function will push the given element source to the top of the stack. */
-		void (*push)(STACK_TYPEDEF_PTR stack,
-					 void *source);
+		/* @brief This function will push the given element source to the top of the stack.             */
+		errno_t(*push)(stack_stp stack,
+					   void *source);
 
-		/* @brief This function will push a new element on top of the stack. The element is constructed in-place. */
-		void (*emplace)(STACK_TYPEDEF_PTR stack,
-						void *destination);
+		  /* @brief This function will push a new element on top of the stack.
+					  The element is constructed in-place.                                                */
+		errno_t(*emplace)(stack_stp stack,
+						  void *destination);
 
-		/* @brief This function will remove the top element from the stack. */
-		void (*pop)(STACK_TYPEDEF_PTR stack);
+		  /* @brief This function will remove the top element from the stack.                             */
+		errno_t(*pop)(stack_stp stack);
 
-		/* @brief This function will exchange the contents of the container adaptor with those of other. */
-		void (*swap)(STACK_TYPEDEF_PPTR stack,
-					 STACK_TYPEDEF_PPTR other);
+		/* @brief This function will exchange the contents of the container adaptor with those of other.*/
+		errno_t(*swap)(stack_stpp stack,
+					   stack_stpp other);
 
-		/* @brief This function will erase the specified elements from the container. */
-		void (*copy)(STACK_TYPEDEF_PPTR destination,
-					 STACK_TYPEDEF_PTR source);
+		  /* @brief This function will erase the specified elements from the container.                   */
+		errno_t(*copy)(stack_stpp destination,
+					   stack_stp source);
 	}modifiers;
 };
 
@@ -122,33 +130,34 @@ struct stack_control_s {
  * @return NONE
  */
 
-void stack_control_configuration_init(STACK_TYPEDEF_PPTR stack,
-									 enum container_type_e type,
-									 container_size_t element_size,
-									 void (*assign)(void *dst, void *src), void (*free)(void *dst));
+errno_t stack_control_configuration_init(stack_stpp stack,
+										 enum container_type_e container_type,
+										 container_size_t element_size,
+										 generic_type_element_assign_t assign,
+										 generic_type_element_free_t free);
 
-/**
- * @brief This function will initialize the stack struct and attach to the specified container.
- *
- * @param stack the pointer to container adapter struct pointer
- * @param container the pointer to container pointer
- * @param func_addr_table the pointer to the function address table of the specified container
- *
- * @return NONE
- */
+   /**
+	* @brief This function will initialize the stack struct and attach to the specified container.
+	*
+	* @param stack the pointer to container adapter struct pointer
+	* @param container the pointer to container pointer
+	* @param func_addr_table the pointer to the function address table of the specified container
+	*
+	* @return NONE
+	*/
 
-void stack_control_configuration_attach(STACK_TYPEDEF_PPTR stack,
-									   enum container_type_e type, void *container);
+errno_t stack_control_configuration_adapt(stack_stpp stack,
+										  void *container);
 
-/**
- * @brief This function will destroy the stack struct
- *
- * @param stack the pointer to container adapter struct pointer
- *
- * @return NONE
- */
+  /**
+   * @brief This function will destroy the stack struct
+   *
+   * @param stack the pointer to container adapter struct pointer
+   *
+   * @return NONE
+   */
 
-void stack_control_configuration_destroy(STACK_TYPEDEF_PPTR stack);
+errno_t stack_control_configuration_destroy(stack_stpp stack);
 
 /**
  * @brief This function will return reference to the top element in the stack.
@@ -158,7 +167,7 @@ void stack_control_configuration_destroy(STACK_TYPEDEF_PPTR stack);
  * @return NONE
  */
 
-void *stack_control_element_access_top(STACK_TYPEDEF_PTR stack);
+void *stack_control_element_access_top(stack_stp stack);
 
 /**
  * @brief This function will check if the underlying container has no elements.
@@ -168,6 +177,8 @@ void *stack_control_element_access_top(STACK_TYPEDEF_PTR stack);
  * @return NONE
  */
 
+bool stack_control_capacity_empty(stack_stp stack);
+
 /**
  * @brief This function will returns the number of elements in the container.
  *
@@ -176,7 +187,17 @@ void *stack_control_element_access_top(STACK_TYPEDEF_PTR stack);
  * @return NONE
  */
 
-container_size_t stack_control_capacity_size(STACK_TYPEDEF_PTR stack);
+container_size_t stack_control_capacity_size(stack_stp stack);
+
+/**
+ * @brief This function will return the number of elements in the underlying container.
+ *
+ * @param stack the pointer to container adapter struct
+ *
+ * @return NONE
+ */
+
+container_size_t stack_control_capacity_max_size(stack_stp stack);
 
 /**
  * @brief This function will push the given element source to the top of the stack.
@@ -187,19 +208,7 @@ container_size_t stack_control_capacity_size(STACK_TYPEDEF_PTR stack);
  * @return NONE
  */
 
-bool stack_control_capacity_empty(STACK_TYPEDEF_PTR stack);
-
-/**
- * @brief This function will return the number of elements in the underlying container.
- *
- * @param stack the pointer to container adapter struct
- *
- * @return NONE
- */
-
-container_size_t stack_control_capacity_max_size(STACK_TYPEDEF_PTR stack);
-
-void stack_control_modifiers_push(STACK_TYPEDEF_PTR stack, void *source);
+errno_t stack_control_modifiers_push(stack_stp stack, void *source);
 
 /**
  * @brief This function will push a new element on top of the stack. The element is constructed in-place.
@@ -210,7 +219,7 @@ void stack_control_modifiers_push(STACK_TYPEDEF_PTR stack, void *source);
  * @return NONE
  */
 
-void stack_control_modifiers_emplace(STACK_TYPEDEF_PTR stack, void *destination);
+errno_t stack_control_modifiers_emplace(stack_stp stack, void *destination);
 
 /**
  * @brief This function will remove the top element from the stack.
@@ -220,7 +229,7 @@ void stack_control_modifiers_emplace(STACK_TYPEDEF_PTR stack, void *destination)
  * @return NONE
  */
 
-void stack_control_modifiers_pop(STACK_TYPEDEF_PTR stack);
+errno_t stack_control_modifiers_pop(stack_stp stack);
 
 /**
  * @brief This function will exchange the contents of the container adaptor with those of other.
@@ -231,7 +240,7 @@ void stack_control_modifiers_pop(STACK_TYPEDEF_PTR stack);
  * @return NONE
  */
 
-void stack_control_modifiers_swap(STACK_TYPEDEF_PPTR stack, STACK_TYPEDEF_PPTR other);
+errno_t stack_control_modifiers_swap(stack_stpp stack, stack_stpp other);
 
 /**
  * @brief This function will copy the contents of the container adaptor to those of other.
@@ -242,7 +251,7 @@ void stack_control_modifiers_swap(STACK_TYPEDEF_PPTR stack, STACK_TYPEDEF_PPTR o
  * @return NONE
  */
 
-void stack_control_modifiers_copy(STACK_TYPEDEF_PPTR destination, STACK_TYPEDEF_PTR source);
+errno_t stack_control_modifiers_copy(stack_stpp destination, stack_stp source);
 
 /*
 *********************************************************************************************************
@@ -250,7 +259,15 @@ void stack_control_modifiers_copy(STACK_TYPEDEF_PPTR destination, STACK_TYPEDEF_
 *********************************************************************************************************
 */
 
+#if (STACK_CFG_INTEGRATED_STRUCTURE_MODE_EN)
+
+/**
+ * @brief This type will contain all the stack control functions.
+ */
+
 extern struct stack_control_s stack_ctrl;
+
+#endif // (STACK_CFG_INTEGRATED_STRUCTURE_MODE_EN)
 
 /*
 *********************************************************************************************************

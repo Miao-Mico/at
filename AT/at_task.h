@@ -34,7 +34,7 @@
  * @brief This struct will contain all the at task control functions.
  */
 
-typedef void (*at_task_function_t)(void *arg);
+typedef void (*at_task_function_t)(void *arg_list);
 
 /**
  * @brief This struct will contain all the at task control functions.
@@ -52,13 +52,14 @@ struct at_task_control_s {
 			at_task_size_t(*highest_priority)(struct at_task_os_s *task_os);
 		}inquire;
 
-		void (*core)(struct at_task_os_s *task_os);
+		void (*core)(struct at_task_os_s *task_os,
+					 void *arg_list);
 	}os;
 
 	struct {
 		struct {
 			errno_t(*init)(struct at_task_os_s *task_os,
-                           struct at_task_s **task,
+						   struct at_task_s **task,
 						   char *name,
 						   void *func,
 						   at_task_size_t priority,
@@ -122,7 +123,8 @@ void at_task_control_os_priority_management(struct at_task_os_s *task_os);
  * @return void
  */
 
-void at_task_control_os_core(struct at_task_os_s *task_os);
+void at_task_control_os_core(struct at_task_os_s *task_os,
+							 void *arg_list);
 
 /**
  * @brief This function will initialize the task of the at task os.
@@ -133,7 +135,7 @@ void at_task_control_os_core(struct at_task_os_s *task_os);
  */
 
 errno_t at_task_control_task_configuration_init(struct at_task_os_s *task_os,
-                                                struct at_task_s **task,
+												struct at_task_s **task,
 												char *name,
 												void *func,
 												at_task_size_t priority,
@@ -150,7 +152,7 @@ errno_t at_task_control_task_configuration_init(struct at_task_os_s *task_os,
  */
 
 errno_t at_task_control_task_configuration_destroy(struct at_task_os_s *task_os,
-                                                   struct at_task_s **task);
+												   struct at_task_s **task);
 
 /**
  * @brief This function will suspend the task of the at task os.
@@ -161,7 +163,7 @@ errno_t at_task_control_task_configuration_destroy(struct at_task_os_s *task_os,
  */
 
 errno_t at_task_control_task_configuration_suspend(struct at_task_os_s *task_os,
-                                                   struct at_task_s *task);
+												   struct at_task_s *task);
 
 /**
  * @brief This function will resume the task of the at task os.
@@ -172,7 +174,7 @@ errno_t at_task_control_task_configuration_suspend(struct at_task_os_s *task_os,
  */
 
 errno_t at_task_control_task_configuration_resume(struct at_task_os_s *task_os,
-                                                  struct at_task_s *task);
+												  struct at_task_s *task);
 
 /*
 *********************************************************************************************************

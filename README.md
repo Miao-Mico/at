@@ -25,7 +25,7 @@ Those  *italic* part support for customization, this means if you feel it not ve
 
 - **Poly-Instantiation**
 
-  This suite can `initialize multiple instance`.
+  This suite can `initialize multiple instances`.
 
 - **Customization**
 
@@ -35,7 +35,7 @@ Those  *italic* part support for customization, this means if you feel it not ve
 
   I have offer a device package of `the windows file stream`, and a data structure package of `list-based stack and list-based queue`.
 
-  And you and you have the rest.
+  And you and i, we have the rest.
 
 - **Integrated Control Structure**
 
@@ -92,6 +92,10 @@ Those  *italic* part support for customization, this means if you feel it not ve
     About this pool, how about `the stack structure` and it's `FILO` feature?
 
     It is `more important` that `the message receive now`, it may break out suddenly because your initiative communication, than `the message some much more older`.
+
+## Reference
+
+[stack](https://github.com/Miao-Mico/stack): Another repo of mine. This repo offer data structures.
 
 ## FAQ
 

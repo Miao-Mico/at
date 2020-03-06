@@ -60,10 +60,9 @@ struct at_control_s {
 		} multi_level;
 	}transmit;
 
-	struct {
-		void (*software_handle)(struct at_s *at);
-		void (*hardware_irqn)(struct at_s *at);
-	}feedback;
+	void (*task_os_tick)(struct at_s *at);
+
+	void (*device_interrupt)(struct at_s *at);
 };
 
 /*
@@ -138,6 +137,26 @@ errno_t at_control_transmit_multi_level_generate(struct at_s *at,
 
 errno_t at_control_transmit_multi_level_send(struct at_s *at,
 											 at_size_t level);
+
+/**
+ * @brief This function will handle the soft logic of the at task os.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+void at_control_task_os_tick(struct at_s *at);
+
+/**
+ * @brief This function need be place under the hardware interrupt point of the device.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+void at_control_device_interrupt(struct at_s *at);
 
 /*
 *********************************************************************************************************

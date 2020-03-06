@@ -66,7 +66,7 @@
 #define CONTAINER_GLOBAL_TYPE_CFG_TREE_FAMILT_EN							    0u
 
 /* Configure        if enable array family.																*/
-#define CONTAINER_GLOBAL_TYPE_CFG_ARRAY_FAMILY_EN								1u
+#define CONTAINER_GLOBAL_TYPE_CFG_ARRAY_FAMILY_EN								0u
 
 /* Configure        if enable list family.														        */
 #define CONTAINER_GLOBAL_TYPE_CFG_LIST_FAMILY_EN								1u
@@ -93,7 +93,7 @@
 #define CONTAINER_GLOBAL_TYPE_CFG_STACK_EN										1u
 
 /* Configure        if enable queue.															        */
-#define CONTAINER_GLOBAL_TYPE_CFG_QUEUE_EN										0u
+#define CONTAINER_GLOBAL_TYPE_CFG_QUEUE_EN										1u
 
 #endif // (CONTAINER_GLOBAL_CATEGORY_CFG_CONTAINER_ADAPTORS_EN)
 
@@ -121,7 +121,7 @@
 #if (CONTAINER_GLOBAL_TYPE_CFG_ARRAY_FAMILY_EN)
 
 /* Configure        if enable red black tree.															*/
-#define CONTAINER_FAMILY_LEVEL_CFG_ARRAY_EN                                     0u
+#define CONTAINER_FAMILY_LEVEL_CFG_ARRAY_EN                                     1u
 
 /* Configure        if enable red black tree.															*/
 #define CONTAINER_FAMILY_LEVEL_CFG_VECTOR_EN                                    1u

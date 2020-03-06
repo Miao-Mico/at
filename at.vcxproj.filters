@@ -42,13 +42,7 @@
     <ClCompile Include="AT\at.c">
       <Filter>源文件\at</Filter>
     </ClCompile>
-    <ClCompile Include="Container\array_family.c">
-      <Filter>源文件\container</Filter>
-    </ClCompile>
     <ClCompile Include="Container\stack.c">
-      <Filter>源文件\container</Filter>
-    </ClCompile>
-    <ClCompile Include="Container\vector.c">
       <Filter>源文件\container</Filter>
     </ClCompile>
     <ClCompile Include="Container\allocator_common.c">
@@ -103,6 +97,15 @@
       <Filter>源文件\at</Filter>
     </ClCompile>
     <ClCompile Include="Container\queue.c">
+      <Filter>源文件\container</Filter>
+    </ClCompile>
+    <ClCompile Include="Container\priority_queue.c">
+      <Filter>源文件\container</Filter>
+    </ClCompile>
+    <ClCompile Include="Container\container_adaptor_def.c">
+      <Filter>源文件\container</Filter>
+    </ClCompile>
+    <ClCompile Include="Container\container_def.c">
       <Filter>源文件\container</Filter>
     </ClCompile>
   </ItemGroup>
@@ -204,6 +207,15 @@
       <Filter>头文件\at</Filter>
     </ClInclude>
     <ClInclude Include="Container\queue.h">
+      <Filter>头文件\container</Filter>
+    </ClInclude>
+    <ClInclude Include="Container\priority_queue.h">
+      <Filter>头文件\container</Filter>
+    </ClInclude>
+    <ClInclude Include="Container\container_adatpor_pte_def.h">
+      <Filter>头文件\container</Filter>
+    </ClInclude>
+    <ClInclude Include="Container\container_pte_def.h">
       <Filter>头文件\container</Filter>
     </ClInclude>
   </ItemGroup>

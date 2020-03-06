@@ -102,6 +102,18 @@ struct at_device_package_s {
 		/* @brief This function will verify the device if valid. */
 		at_import_func_t package;
 	}verify;
+
+	at_import_func_t interrupt;
+};
+
+/**
+ * @brief This typedef will extern the type of at.
+ */
+
+struct at_device_package_interrupt_return_s {
+	size_t count;
+
+	char *string;
 };
 
 /**

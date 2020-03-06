@@ -7,8 +7,8 @@
 *********************************************************************************************************
 */
 
-#ifndef __COMPARE_H
-#define __COMPARE_H
+#ifndef __CONTAINER_ADAPTOR_FAMILY_H
+#define __CONTAINER_ADAPTOR_FAMILY_H
 
 /*
 *********************************************************************************************************
@@ -16,7 +16,7 @@
 *********************************************************************************************************
 */
 
-#include "algorithm_def.h"
+#include "container.h"
 
 /*
 *********************************************************************************************************
@@ -31,10 +31,23 @@
 */
 
 /**
- * @brief This type is the compare function prototype typedef
+ * @brief This struct is the container adaptor structure.
  */
 
-typedef bool (*compare_t)(void *lhs, void *rhs, size_t len);
+struct container_adaptor_s;
+
+/**
+ * @brief This struct is the container adaptor structure.
+ */
+
+struct container_adaptor_adapt_package_s {
+	void *container_ptr;
+
+	enum container_type_e container_type;
+	container_size_t element_size;
+	generic_type_element_assign_t assign_ptr;
+	generic_type_element_free_t free_ptr;
+};
 
 /*
 *********************************************************************************************************
@@ -43,43 +56,37 @@ typedef bool (*compare_t)(void *lhs, void *rhs, size_t len);
 */
 
 /**
-* @brief This function will compare if the left-hand-side lesser than the right-hand-side.
-*
-* @param lhs the pointer to the left-hand-side value.
-* @param rhs the pointer to the right-hand-side value.
-*
-* @return if left-hand-side lesser than the right-hand-side
-*	- true	yes
-*	- false	no
-*/
+ * @brief This function will initialize the container adaptor.
+ *
+ * @param void
+ *
+ * @return void
+ */
 
-bool compare_control_lesser(void *lhs, void *rhs, size_t len);
-
-/**
-* @brief This function will compare if the left-hand-side greater than the right-hand-side.
-*
-* @param lhs the pointer to the left-hand-side value.
-* @param rhs the pointer to the right-hand-side value.
-*
-* @return if left-hand-side greater than the right-hand-side
-*	- true	yes
-*	- false	no
-*/
-
-bool compare_control_greater(void *lhs, void *rhs, size_t len);
+errno_t container_adaptor_control_configuration_init(struct container_adaptor_s **adaptor,
+													 enum container_type_e adaptor_type,
+													 struct container_allocte_package_s allocate_package,
+													 struct container_adaptor_adapt_package_s adapt_package);
 
 /**
-* @brief This function will compare if the left-hand-side equal with the right-hand-side.
-*
-* @param lhs the pointer to the left-hand-side value.
-* @param rhs the pointer to the right-hand-side value.
-*
-* @return if left-hand-side equal with the right-hand-side
-*	- true	yes
-*	- false	no
-*/
+ * @brief This function will destroy the container adaptor.
+ *
+ * @param void
+ *
+ * @return void
+ */
 
-bool compare_control_equal(void *lhs, void *rhs, size_t len);
+errno_t container_adaptor_control_configuration_destroy(struct container_adaptor_s **adaptor);
+
+/**
+ * @brief This function will initialize the container struct and attach to the specified container.
+ *
+ * @param container the container adapter struct
+ *
+ * @return the pointer to the specified container function address table.
+ */
+
+extern void *container_adaptor_control_get_container_func_addr_table(enum container_type_e type);
 
 /*
 *********************************************************************************************************
@@ -89,8 +96,14 @@ bool compare_control_equal(void *lhs, void *rhs, size_t len);
 
 /*
 *********************************************************************************************************
+*                                            FUNCTIONS
+*********************************************************************************************************
+*/
+
+/*
+*********************************************************************************************************
 *                                             MODULE END
 *********************************************************************************************************
 */
 
-#endif // !__COMPARE_H
+#endif // !__CONTAINER_ADAPTOR_FAMILY_H

@@ -114,8 +114,8 @@ void *allocator_common_function_address_tables[] =
  * @return NONE
  */
 
-void allocator_control_configuration_init(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator,
-										 void (*lack_of_memory)(void *))
+errno_t allocator_control_configuration_init(allocator_common_stpp allocator,
+											 void (*lack_of_memory)(void *))
 {
 	assert(allocator);
 
@@ -123,7 +123,7 @@ void allocator_control_configuration_init(ALLOCATOR_COMMON_TYPEDEF_PPTR allocato
 		*allocator_alloced = (struct allocator_s *)calloc(1, sizeof(struct allocator_s));			/* Malloc #1 */
 
 	if (NULL == allocator_alloced) {
-		return;
+		return 1;
 	}
 
 	allocator_alloced->allocator_type_id = ALLOCATOR_COMMON;                                       /* Assign the allocator struct */
@@ -137,6 +137,8 @@ void allocator_control_configuration_init(ALLOCATOR_COMMON_TYPEDEF_PPTR allocato
 	#endif
 
 	(*allocator) = allocator_alloced;
+
+	return 0;
 }
 
 /**
@@ -147,7 +149,7 @@ void allocator_control_configuration_init(ALLOCATOR_COMMON_TYPEDEF_PPTR allocato
  * @return NONE
  */
 
-void allocator_control_configuration_destroy(ALLOCATOR_COMMON_TYPEDEF_PPTR allocator)
+errno_t allocator_control_configuration_destroy(allocator_common_stpp allocator)
 {
 	assert(allocator);
 
@@ -180,6 +182,8 @@ void allocator_control_configuration_destroy(ALLOCATOR_COMMON_TYPEDEF_PPTR alloc
 	free((*allocator));																	            /* Free #1 */
 
 	(*allocator) = NULL;
+
+	return 0;
 }
 
 /**
@@ -191,8 +195,8 @@ void allocator_control_configuration_destroy(ALLOCATOR_COMMON_TYPEDEF_PPTR alloc
  * @return NONE
  */
 
-void allocator_control_configuration_exception(ALLOCATOR_COMMON_TYPEDEF_PTR allocator,
-											  void (*lack_of_memory)(void *))
+void allocator_control_configuration_exception(allocator_common_stp allocator,
+											   void (*lack_of_memory)(void *))
 {
 	assert(allocator);
 
@@ -214,7 +218,7 @@ void allocator_control_configuration_exception(ALLOCATOR_COMMON_TYPEDEF_PTR allo
  * @return return the pointer point to the uninitialized storage which allocated
  */
 
-void *allocator_control_allocate(ALLOCATOR_COMMON_TYPEDEF_PTR allocator,
+void *allocator_control_allocate(allocator_common_stp allocator,
 								 ALLOCATOR_SIZE_TYPEDEF count, ALLOCATOR_SIZE_TYPEDEF size)
 {
 	assert(allocator);
@@ -250,8 +254,8 @@ void *allocator_control_allocate(ALLOCATOR_COMMON_TYPEDEF_PTR allocator,
  * @return NONE
  */
 
-void allocator_control_deallocate(ALLOCATOR_COMMON_TYPEDEF_PTR allocator,
-								  void *block, ALLOCATOR_SIZE_TYPEDEF count)
+errno_t allocator_control_deallocate(allocator_common_stp allocator,
+									 void *block, ALLOCATOR_SIZE_TYPEDEF count)
 {
 	assert(allocator);
 
@@ -264,6 +268,8 @@ void allocator_control_deallocate(ALLOCATOR_COMMON_TYPEDEF_PTR allocator,
 	debug_capture_stack_back_trace_link_link(allocator->capture_stack_back_trace_link, 1);
 
 	#endif // (ALLOCATOR_CFG_DEBUG_MODE_EN)
+
+	return 0;
 }
 
 /**
@@ -276,7 +282,7 @@ void allocator_control_deallocate(ALLOCATOR_COMMON_TYPEDEF_PTR allocator,
  * @return NONE
  */
 
-void allocator_control_memory_alloc(ALLOCATOR_COMMON_TYPEDEF_PTR allocator,
+void allocator_control_memory_alloc(allocator_common_stp allocator,
 									void *block, ALLOCATOR_SIZE_TYPEDEF size)
 {
 	assert(allocator);

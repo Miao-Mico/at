@@ -6,6 +6,8 @@
 
 #include "at_task.h"
 
+#include "at_message.h"
+
 /*
 *********************************************************************************************************
 *                                            LOCAL DEFINES
@@ -44,9 +46,10 @@ struct at_task_os_s {
 		struct at_task_s *suspend;
 	}list_table[AT_TASK_CFG_PRIORITY_MAX];
 
-	struct at_task_s *running_task_ptr;
-
 	at_task_size_t priority;
+
+	at_task_size_t priority_max;
+	struct at_task_s *running_task_ptr;
 };
 
 /**
@@ -168,7 +171,7 @@ errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os)
 
 	errno_t err = 0;
 
-	if (NULL == ((*task_os) = calloc(1,sizeof(struct at_task_os_s)))) {
+	if (NULL == ((*task_os) = calloc(1, sizeof(struct at_task_os_s)))) {
 		return -1;
 	}
 
@@ -186,7 +189,7 @@ errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os)
 
 	#if (AT_TASK_CFG_IDLE_TASK_EN)
 
-	if (at_task_control_task_configuration_init((*task_os) ,								/* Initialize the idle task */
+	if (at_task_control_task_configuration_init((*task_os),									/* Initialize the idle task */
 												&at_task_os_idle_task,
 												"at task os.idle task",
 												at_task_os_control_idle_task_function,
@@ -198,6 +201,8 @@ errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os)
 	}
 
 	#endif // (AT_TASK_CFG_IDLE_TASK_EN)
+
+	(*task_os)->priority_max = (at_task_size_t)AT_TASK_CFG_PRIORITY_MAX - 1;
 
 	(*task_os)->os_running = true;
 
@@ -237,7 +242,7 @@ errno_t at_task_control_os_configuration_destroy(struct at_task_os_s **task_os)
 			for (size_t c = 0; c < size_priority_list; c++) {								/* Destroy the tasks in the list,total have size_priority_list */
 				task_priority_list = (void **)at_task_os_task_list_package->element_access.
 					top(list_priority);
-				at_task_control_task_configuration_destroy(*task_os ,&(struct at_task_s *)task_priority_list);
+				at_task_control_task_configuration_destroy(*task_os, &(struct at_task_s *)task_priority_list);
 
 				at_task_os_task_list_package->modifiers.pop(list_priority);
 			}
@@ -248,7 +253,7 @@ errno_t at_task_control_os_configuration_destroy(struct at_task_os_s **task_os)
 		at_task_os_task_list_package->configuration.
 			destroy(&(*task_os)->list_table[cnt].suspend);
 	}
-	
+
 	(*task_os) = NULL;
 
 	return 0;
@@ -323,33 +328,33 @@ void at_task_control_os_scheduler(struct at_task_os_s *task_os)
 {
 	assert(task_os);
 
-	if (false == task_os->os_running) {                        /* If task os is running */
+	if (false == task_os->os_running) {														/* If task os is running */
 		return;
 	}
 
 	at_task_size_t priority = 0;
 	struct at_task_s *task_ready = NULL;
 
-	priority = at_task_control_os_inquire_highest_priority(task_os);   /* Get the highest priority */
+	priority = at_task_control_os_inquire_highest_priority(task_os);						/* Get the highest priority */
 
-	task_ready = at_task_os_task_list_package->element_access.	/* Get the top task block of this priority ready list */
+	task_ready = at_task_os_task_list_package->element_access.								/* Get the top task block of this priority ready list */
 		top(task_os->list_table[priority].ready);
 
 	if (NULL == task_ready) {
-		goto PRIORITY_MANAGE;									/* Manage the priority */
+		goto PRIORITY_MANAGE;																/* Manage the priority */
 	}
 
-	if (task_os->running_task_ptr == task_ready) {            /* If the task ready is the task running */
-		goto PRIORITY_MANAGE;									/* Manage the priority */
+	if (task_os->running_task_ptr == task_ready) {											/* If the task ready is the task running */
+		goto PRIORITY_MANAGE;																/* Manage the priority */
 	}
 
 	task_os->running_task_ptr = task_ready;
 
-	at_task_control_os_task_switcher(task_os,priority, task_ready);		/* Switch the task block to the tail of the ready list */
+	at_task_control_os_task_switcher(task_os, priority, task_ready);						/* Switch the task block to the tail of the ready list */
 
 PRIORITY_MANAGE:
 
-	at_task_control_os_priority_management(task_os);					/* Manage the priority */
+	at_task_control_os_priority_management(task_os);										/* Manage the priority */
 }
 
 /**
@@ -360,7 +365,7 @@ PRIORITY_MANAGE:
  * @return void
  */
 
-void at_task_control_os_core(struct at_task_os_s *task_os)
+void at_task_control_os_core(struct at_task_os_s *task_os, void *arg_list)
 {
 	assert(task_os);
 
@@ -370,8 +375,33 @@ void at_task_control_os_core(struct at_task_os_s *task_os)
 
 	at_task_control_os_scheduler(task_os);
 
-	if (NULL != task_os->running_task_ptr) {
-		task_os->running_task_ptr->function(task_os->running_task_ptr);			/* Run the function of the task */
+	if (NULL != task_os->running_task_ptr) {												/* Valid task */
+		static char *msg = NULL;
+		static bool msg_load = false;
+		static bool highest_priority = false;
+
+		if (false == msg_load &&
+			NULL == (msg = at_message_ctrl.feedback.load(arg_list))) {						/* Load the feedback message when at the priority max */
+			return;
+		}
+
+		msg_load = true;
+
+		//if (task_os->priority_max == task_os->running_task_ptr->info.priority) {			/* First run should be the highest priority task */
+		//	highest_priority = true;
+		//}
+
+		//if (false == highest_priority) {
+		//	return;
+		//}
+
+		task_os->running_task_ptr->function(msg);											/* Run the function of the task */
+
+		if ((at_task_size_t)AT_TASK_CFG_PRIORITY_MAX - 1 ==									/* When the idle task */
+			task_os->running_task_ptr->info.priority) {
+			//highest_priority = false;
+			msg_load = false;
+		}
 	}
 }
 
@@ -403,19 +433,23 @@ errno_t at_task_control_task_configuration_init(struct at_task_os_s *task_os,
 
 	switch (opt) {
 		case AT_TASK_OPTION_RUN:
-			(*task)->info.status = AT_TASK_STATUS_READY;											/* Set the ready status of the task */
+			(*task)->info.status = AT_TASK_STATUS_READY;									/* Set the ready status of the task */
 
-			at_task_os_task_list_package->modifiers.push(task_os->list_table[priority].ready,		/* Push the task address into the ready list of this priority */
-														 *task);
+			at_task_os_task_list_package->modifiers.
+				push(task_os->list_table[priority].ready, *task);							/* Push the task address into the ready list of this priority */
 			break;
 		case AT_TASK_OPTION_SUSPEND:
-			(*task)->info.status = AT_TASK_STATUS_SUSPEND;											/* Set the ready status of the task */
+			(*task)->info.status = AT_TASK_STATUS_SUSPEND;									/* Set the ready status of the task */
 
-			at_task_os_task_list_package->modifiers.push(task_os->list_table[priority].suspend,	/* Push the task address into the suspend list of this priority */
-														 *task);
+			at_task_os_task_list_package->modifiers.
+				push(task_os->list_table[priority].suspend, *task);							/* Push the task address into the suspend list of this priority */
 			break;
 		default:
 			break;
+	}
+
+	if (task_os->priority_max > priority) {													/* Record the highest priority of the task os */
+		task_os->priority_max = priority;
 	}
 
 	(*task)->info.name = name;
@@ -442,6 +476,10 @@ errno_t at_task_control_task_configuration_destroy(struct at_task_os_s *task_os,
 	assert(task_os);
 	assert(task);
 	assert(*task);
+
+	if (task_os->priority_max = (*task)->info.priority) {									/* Record the highest priority of the task os */
+		task_os->priority_max--;
+	}
 
 	free(*task);
 
@@ -526,11 +564,7 @@ at_task_control_task_configuration_resume(struct at_task_os_s *task_os,
  * @return void
  */
 
-void at_task_os_control_idle_task_function(void *arg)
+void at_task_os_control_idle_task_function(void *arg_list)
 {
-	printf("at task os.idle task \r\n");
-
-	//assert(task);
-
-	//task->info.status = AT_TASK_STATUS_SUSPEND;
+	printf("at task os.idle task.message:\"%s\" \r\n", (char *)arg_list);
 }

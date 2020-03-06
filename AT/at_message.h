@@ -41,6 +41,12 @@ struct at_message_control_s {
 		errno_t(*destroy)(struct at_message_s **message);
 	}configuration;
 
+    struct {
+		void *(*transmit)(struct at_message_s *message);
+
+		void *(*feedback)(struct at_message_s *message);
+    }element_access;
+
 	struct {
 		errno_t(*deposit)(struct at_message_s *message,
                           at_size_t cnt,

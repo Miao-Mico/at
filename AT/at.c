@@ -47,6 +47,8 @@
 
 struct at_information_s {
 	bool switch_status;
+
+	void *multi_level_transmit_ptr;
 };
 
 /**
@@ -102,7 +104,10 @@ struct at_control_s at_ctrl = {
 
 	.transmit.single_level_send = at_control_transmit_single_level_send,
 	.transmit.multi_level.generate = at_control_transmit_multi_level_generate,
-	.transmit.multi_level.send = at_control_transmit_multi_level_send
+	.transmit.multi_level.send = at_control_transmit_multi_level_send,
+
+	.task_os_tick = at_control_task_os_tick,
+	.device_interrupt = at_control_device_interrupt
 };
 
 struct at_task_s *at_task_os_multi_level_transmit_task = NULL;
@@ -132,7 +137,7 @@ struct at_transmit_format_analysis_package_s
  * @return void
  */
 
-void at_control_at_task_os_multi_level_transmit_task_function(void);
+void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list);
 
 /*
 *********************************************************************************************************
@@ -169,7 +174,7 @@ errno_t at_control_configuration_init(struct at_s **at,
 										 &at_task_os_multi_level_transmit_task,
 										 "at task os.multi level transmit task",
 										 at_control_at_task_os_multi_level_transmit_task_function,
-										 0,
+										 0,													/* Set Max priority */
 										 NULL,
 										 NULL,
 										 0);
@@ -336,8 +341,8 @@ errno_t at_control_transmit_multi_level_generate(struct at_s *at,
 
 	char
 		*ist_package[AT_CFG_TRANSMIT_GENERATE_PIECES_MAX] = { NULL },
-		string_package[AT_CFG_TRANSMIT_GENERATE_LEVELS_MAX]
-		[AT_CFG_TRANSMIT_GENERATE_STRING_LENGTH_MAX] = { 0 };							/* Allow MAX 4 level */
+		string_package[AT_CFG_TRANSMIT_GENERATE_LEVELS_MAX]									/* Allow MAX _TRANSMIT_GENERATE_LEVELS_MAX level */
+		[AT_CFG_TRANSMIT_GENERATE_STRING_LENGTH_MAX] = { 0 };								/* Allow MAX _TRANSMIT_GENERATE_STRING_LENGTH_MAX length */
 
 	at_size_t cnt = 0;
 
@@ -430,15 +435,15 @@ errno_t at_control_transmit_multi_level_send(struct at_s *at,
  */
 
 extern inline void
-at_control_feedback_software_tick(struct at_s *at)
+at_control_task_os_tick(struct at_s *at)
 {
 	assert(at);
 
-	at_task_ctrl.os.core(at->task_os);
+	at_task_ctrl.os.core(at->task_os, at->message);
 }
 
 /**
- * @brief This function need be place under the hardware interrupt of the device.
+ * @brief This function need be place under the hardware interrupt point of the device.
  *
  * @param void
  *
@@ -446,9 +451,41 @@ at_control_feedback_software_tick(struct at_s *at)
  */
 
 extern inline void
-at_control_feedback_hardware_interrupt(struct at_s *at)
+at_control_device_interrupt(struct at_s *at)
 {
 	assert(at);
+
+	struct at_device_package_interrupt_return_s
+		*interrupt_return = NULL;
+
+	static char string[100] = { 0 };
+	static at_size_t count = 0;
+
+	if (NULL == (interrupt_return = (at->device_package->
+									 interrupt(at->device_package->device_ptr)))->string) {
+		return;
+	}
+
+	/* These below are dependent on the situation that each AT instruction feedbacks with "\n" */
+
+	char template[] = "\n";
+
+	memcpy(string + count, interrupt_return->string, interrupt_return->count);
+	count += interrupt_return->count;
+
+	if (NULL == strstr(string, template)) {
+		goto NOT_FIT;
+	}
+
+	at_message_ctrl.feedback.
+		deposit(at->message, string, count+1);												/* Deposit the string into the feedback memory pool */
+
+	memset(string, '\0', count);															/* Clean the static string and count */
+	count = 0;
+
+NOT_FIT:
+
+	return;
 }
 
 /**
@@ -527,7 +564,9 @@ EXIT:
  * @return void
  */
 
-void at_control_at_task_os_multi_level_transmit_task_function(void)
+void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list)
 {
-	printf("at task os.multi level transmit task\r\n");
+	printf("at task os.multi level transmit task.message:\"%s\" \r\n", (char *)arg_list);
+
+
 }

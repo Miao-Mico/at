@@ -52,7 +52,7 @@
  * @return void
  */
 
-errno_t at_windows_control_mount(struct at_device_package_s *package,
+errno_t at_windows_control_configuration_mount(struct at_device_package_s *package,
 								 void *arg_list);
 
  /**
@@ -63,7 +63,7 @@ errno_t at_windows_control_mount(struct at_device_package_s *package,
   * @return void
   */
 
-errno_t at_windows_control_demount(struct at_device_package_s *package);
+errno_t at_windows_control_configuration_demount(struct at_device_package_s *package);
 
 /**
  * @brief This function will control the send/output of the windows i/o.
@@ -73,7 +73,7 @@ errno_t at_windows_control_demount(struct at_device_package_s *package);
  * @return void
  */
 
-errno_t at_windows_control_send(void *device, void *data, size_t len);
+errno_t at_windows_control_transmit_send(void *device, void *data, size_t len);
 
 /**
  * @brief This function will control the receive/input of the windows i/o.
@@ -83,7 +83,17 @@ errno_t at_windows_control_send(void *device, void *data, size_t len);
  * @return void
  */
 
-void *at_windows_control_receive(void *device, size_t len);
+void *at_windows_control_transmit_receive(void *device, size_t len);
+
+/**
+ * @brief This function will verify if the windows i/o package is valid.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+struct at_device_package_interrupt_return_s *at_windows_control_interrupt(void *device);
 
 /**
  * @brief This function will verify if the windows i/o device is valid.
@@ -151,7 +161,7 @@ at_device_package_packer_windows_file_stream(struct at_device_package_s **packag
 		return -1;
 	}
 
-	if (at_windows_control_mount((*package), arg_list)) {
+	if (at_windows_control_configuration_mount((*package), arg_list)) {
 		return 1;
 	};
 
@@ -161,11 +171,13 @@ at_device_package_packer_windows_file_stream(struct at_device_package_s **packag
 
 	(*package)->device_pack_id = AT_DEVICE_TEMPLATE_CFG_WINDOWS_FILE_STREAM_ID;
 
-	(*package)->configuration.mount = (at_import_func_t)at_windows_control_mount;
-	(*package)->configuration.demount = (at_import_func_t)at_windows_control_demount;
+	(*package)->configuration.mount = (at_import_func_t)at_windows_control_configuration_mount;
+	(*package)->configuration.demount = (at_import_func_t)at_windows_control_configuration_demount;
 
-	(*package)->transmit.send = (at_import_func_t)at_windows_control_send;
-	(*package)->transmit.receive = (at_import_func_t)at_windows_control_receive;
+	(*package)->transmit.send = (at_import_func_t)at_windows_control_transmit_send;
+	(*package)->transmit.receive = (at_import_func_t)at_windows_control_transmit_receive;
+
+    (*package)->interrupt = (at_import_func_t)at_windows_control_interrupt;
 
 	(*package)->verify.device = (at_import_func_t)at_windows_control_verify_device;
 	(*package)->verify.package = (at_import_func_t)at_windows_control_verify_package;
@@ -189,7 +201,7 @@ at_device_package_packer_windows_file_stream(struct at_device_package_s **packag
  */
 
 static inline errno_t
-at_windows_control_mount(struct at_device_package_s *package,
+at_windows_control_configuration_mount(struct at_device_package_s *package,
 						 void *arg_list)
 {
 	assert(package);
@@ -203,11 +215,15 @@ at_windows_control_mount(struct at_device_package_s *package,
 		return -1;
 	}
 
-	if (err = fopen_s(((FILE **)file + 0), *((char **)arg_list + 0), *((char **)arg_list + 1))) {
+	if (err = fopen_s(((FILE **)file + 0), 
+                      *((char **)arg_list + 0), 
+                      *((char **)arg_list + 1))) {
 		return err;
 	}
 
-	if (err = fopen_s(((FILE **)file + 1), *((char **)arg_list + 2), *((char **)arg_list + 3))) {
+	if (err = fopen_s(((FILE **)file + 1), 
+                      *((char **)arg_list + 2), 
+                      *((char **)arg_list + 3))) {
 		return err;
 	}
 
@@ -229,7 +245,7 @@ at_windows_control_mount(struct at_device_package_s *package,
  */
 
 static inline errno_t
-at_windows_control_demount(struct at_device_package_s *package)
+at_windows_control_configuration_demount(struct at_device_package_s *package)
 {
 	assert(package);
 
@@ -250,7 +266,7 @@ at_windows_control_demount(struct at_device_package_s *package)
  */
 
 static inline errno_t
-at_windows_control_send(void *device, void *data, size_t len)
+at_windows_control_transmit_send(void *device, void *data, size_t len)
 {
 	fwrite(data, sizeof(char), len, *((void **)device + 0));
 
@@ -266,9 +282,19 @@ at_windows_control_send(void *device, void *data, size_t len)
  */
 
 static inline void
-*at_windows_control_receive(void *device, size_t len)
+*at_windows_control_transmit_receive(void *device, size_t len)
 {
-	char *string = calloc(1, sizeof(char) * (len + 1));
+	static char *string = NULL;
+
+    static size_t len_last = 0;
+
+    if (len_last < len) {                                                                   /* If last length is greater than this time,reallocate the memory */
+		if (NULL != string) {
+			free(string);
+        }
+
+        string = calloc(1, sizeof(char) * (len + 1));
+    }
 
 	if (NULL == string) {
 		return NULL;
@@ -277,6 +303,32 @@ static inline void
 	fgets(string, len, *((void **)device + 1));
 
 	return string;
+}
+
+/**
+ * @brief This function will verify if the windows i/o package is valid.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+static inline struct at_device_package_interrupt_return_s
+*at_windows_control_interrupt(void *device)
+{
+    assert(device);
+
+    static struct at_device_package_interrupt_return_s
+        interrupt = { 0 };
+
+    #define INTERRUPT_DATA_LENGTH_MAX             1                                         /* Receive 1 char type once,simulate the usart */
+
+	interrupt.string = 
+        at_windows_control_transmit_receive(device, INTERRUPT_DATA_LENGTH_MAX + 1);
+
+    interrupt.count = INTERRUPT_DATA_LENGTH_MAX;
+
+    return &interrupt;
 }
 
 /**
@@ -292,7 +344,7 @@ at_windows_control_verify_device(void *device)
 {
 	assert(device);
 
-	if (NULL == *((void **)device + 0) ||       /* Verify if the transmit part of the windows i/o package is valid */
+	if (NULL == *((void **)device + 0) ||                                                   /* Verify if the device part of the windows i/o package is valid */
 		NULL == *((void **)device + 1)) {
 		goto FAIL;
 	}
@@ -316,8 +368,12 @@ at_windows_control_verify_package(struct at_device_package_s *package)
 {
 	assert(package);
 
-	if (NULL == package->transmit.send ||       /* Verify if the transmit part of the windows i/o package is valid */
+	if (NULL == package->transmit.send ||                                                   /* Verify if the transmit part of the windows i/o package is valid */
 		NULL == package->transmit.receive) {
+		goto FAIL;
+	}
+
+	if (NULL == package->interrupt) {                                                       /* Verify if the interrupt part of the windows i/o package is valid */
 		goto FAIL;
 	}
 

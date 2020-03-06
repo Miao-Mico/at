@@ -21,6 +21,7 @@
 /* Data Structure Include file																		    */
 #include "stack.h"
 #include "queue.h"
+#include "priority_queue.h"
 
 /*
 *********************************************************************************************************
@@ -78,6 +79,21 @@ extern struct at_data_structure_package_s at_list_queue_package;
             They are the queue!"
 
 #endif // __QUEUE_H
+
+#ifdef __PRIORITY_QUEUE_H
+
+/**
+ * @brief This struct will contain all the at task list stack control functions.
+ */
+
+extern struct at_data_structure_package_s at_list_priority_queue_package;
+
+#else
+
+#error  "Please transplant a good data structure package fit the data structure that at needs \
+            They are the priority queue!"
+
+#endif // __PRIORITY_QUEUE_H
 
 /*
 *********************************************************************************************************

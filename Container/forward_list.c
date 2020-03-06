@@ -6,6 +6,8 @@
 
 #include "forward_list.h"
 
+#include "container_pte_def.h"
+
 /*
 *********************************************************************************************************
 *                                            LOCAL DEFINES
@@ -42,34 +44,36 @@
 
 void *forward_list_function_address_tables[] =
 {
-	(void *)&forward_list_control_configuration_init,							/* No.0 : initialize */
+	(void *)&forward_list_control_configuration_init,										/* No.0 : initialize */
 
-	(void *)&list_family_control_configuration_destroy,							/* No.1 : destroy */
+	(void *)&list_family_control_configuration_destroy,										/* No.1 : destroy */
 
-	(void *)&list_family_control_element_access_at,								/* No.3 : at */
+	(void *)&list_family_control_element_access_at,											/* No.3 : at */
 
-	(void *)&list_family_control_capacity_empty,								/* No.4 : empty */
+	(void *)&list_family_control_capacity_empty,											/* No.4 : empty */
 
-	(void *)&list_family_control_capacity_size,									/* No.5 : size */
+	(void *)&list_family_control_capacity_size,												/* No.5 : size */
 
-	(void *)&list_family_control_capacity_max_size,								/* No.6 : max_size */
+	(void *)&list_family_control_capacity_max_size,											/* No.6 : max_size */
 
-	(void *)&list_family_control_modifiers_insert_after,						/* No.7 : insert */
+	(void *)&list_family_control_modifiers_insert_after,									/* No.7 : insert */
 
-	(void *)&list_family_control_modifiers_erase_after,							/* No.8 : erase */
+	(void *)&list_family_control_modifiers_erase_after,										/* No.8 : erase */
 
-	(void *)&list_family_control_modifiers_swap,								/* No.9 : swap */
+	(void *)&list_family_control_modifiers_swap,											/* No.9 : swap */
 
-	(void *)&list_family_control_modifiers_copy,								/* No.10 : copy */
+	(void *)&list_family_control_modifiers_copy,											/* No.10 : copy */
+
+	(void *)&list_family_control_list_operations_sort,										/* No.11 : sort */
 };
 
-#if (FORWARD_LIST_CFG_INTERGRATED_STRUCTURE_MODE_EN)
+#if (FORWARD_LIST_CFG_INTEGRATED_STRUCTURE_MODE_EN)
 
 /**
  * @brief This struct will control all the forward_list functions conveniently.
  */
 
-struct list_family_control_s forward_list_ctrl = {
+struct forward_list_control_s forward_list_ctrl = {
 	{
 		forward_list_control_configuration_init,
 		list_family_control_configuration_destroy,
@@ -128,7 +132,7 @@ void *forward_list_control_list_operations_remove_value = NULL;
  * @return void
  */
 
-void forward_list_control_switch_control(void);
+void forward_list_control_switch_control(void *arg_list);
 
 /**
 * @brief This function will get the node at the specified location in the container.
@@ -139,7 +143,7 @@ void forward_list_control_switch_control(void);
 * @return the node at the specified location in the container
 */
 
-void *forward_list_control_get_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
+void *forward_list_control_get_node(forward_list_stp forward_list,
 									container_size_t position);
 
 /**
@@ -152,7 +156,7 @@ void *forward_list_control_get_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
  * @return NONE
  */
 
-void *forward_list_control_set_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
+void *forward_list_control_set_node(forward_list_stp forward_list,
 									container_size_t position, struct forward_list_node_s *node);
 
 /**
@@ -164,7 +168,7 @@ void *forward_list_control_set_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
  * @return NONE
  */
 
-void *forward_list_control_del_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
+void *forward_list_control_del_node(forward_list_stp forward_list,
 									container_size_t position);
 
  /**
@@ -177,7 +181,7 @@ void *forward_list_control_del_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
   * @return NONE
   */
 
-void forward_list_control_swap_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
+void forward_list_control_swap_node(forward_list_stp forward_list,
 									container_size_t dst_pos,
 									container_size_t src_pos);
 
@@ -212,7 +216,7 @@ struct node_operator_s forward_list_control_node_operator = {
  * @return void
  */
 
-void forward_list_control_switch_control(void)
+void forward_list_control_switch_control(void *arg_list)
 {
 	list_family_control_get_control(LIST_FAMILY_LIST, forward_list_control_node_operator);
 }
@@ -228,15 +232,16 @@ void forward_list_control_switch_control(void)
  * @return NONE
  */
 
-void forward_list_control_configuration_init(FORWARD_LIST_TYPEDEF_PPTR forward_list,
-											 container_size_t element_size,
-											 void (*assign)(void *dst, void *src), void (*free)(void *dst))
+errno_t  forward_list_control_configuration_init(forward_list_stpp forward_list,
+												 container_size_t element_size,
+												 generic_type_element_assign_t assign,
+												 generic_type_element_free_t free)
 {
 	assert(forward_list);
 	assert(0 <= element_size);
 
-	list_family_control_configuration_init(forward_list, forward_list_control_switch_control,
-										   FORWARD_LIST_CFG_ALLOCATOR_TYPE, element_size, assign, free);
+	return list_family_control_configuration_init(forward_list, forward_list_control_switch_control,
+												  FORWARD_LIST_CFG_ALLOCATOR_TYPE, element_size, assign, free);
 }
 
 /**
@@ -248,7 +253,7 @@ void forward_list_control_configuration_init(FORWARD_LIST_TYPEDEF_PPTR forward_l
  * @return NONE
  */
 
-void *forward_list_control_get_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
+void *forward_list_control_get_node(forward_list_stp forward_list,
 									container_size_t position)
 {
 	assert(forward_list);
@@ -260,7 +265,7 @@ void *forward_list_control_get_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
 	}
 
 	struct forward_list_node_s
-		**current_node = (struct forward_list_node_s **) & forward_list->node;
+		**current_node = (struct forward_list_node_s **) & forward_list->element_ptr;
 
 	container_size_t
 		currrent_position = 0;
@@ -290,7 +295,7 @@ LOOP:
  * @return NONE
  */
 
-void *forward_list_control_set_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
+void *forward_list_control_set_node(forward_list_stp forward_list,
 									container_size_t position, struct forward_list_node_s *node)
 {
 	assert(forward_list);
@@ -317,7 +322,7 @@ void *forward_list_control_set_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
 	node_prev = forward_list_control_get_node(forward_list, position - 1);
 
 	if (NULL == node_prev) {														/* If the previous node is NULL,the node must be the head. */
-		forward_list->node = node;
+		forward_list->element_ptr = node;
 	} else {
 		node_prev->next = node;
 	}
@@ -336,7 +341,7 @@ void *forward_list_control_set_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
  * @return NONE
  */
 
-void *forward_list_control_del_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
+void *forward_list_control_del_node(forward_list_stp forward_list,
 									container_size_t position)
 {
 	assert(forward_list);
@@ -358,7 +363,7 @@ void *forward_list_control_del_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
 	if (NULL != node_prev) {
 		node_prev->next = node_del->next;
 	} else {
-		forward_list->node = node_del->next;
+		forward_list->element_ptr = node_del->next;
 	}
 
 	forward_list->info.size--;
@@ -376,7 +381,7 @@ void *forward_list_control_del_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
  * @return NONE
  */
 
-void forward_list_control_swap_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
+void forward_list_control_swap_node(forward_list_stp forward_list,
 									container_size_t dst_pos,
 									container_size_t src_pos)
 {
@@ -409,7 +414,7 @@ void forward_list_control_swap_node(FORWARD_LIST_TYPEDEF_PTR forward_list,
 	if (NULL != node_dst_prev) {
 		node_dst_prev->next = node_src;
 	} else {
-		forward_list->node = node_src;
+		forward_list->element_ptr = node_src;
 	}
 
 	if ((size_t)node_dst != (size_t)node_src_prev) {

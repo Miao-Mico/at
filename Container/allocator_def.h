@@ -16,6 +16,7 @@
 *********************************************************************************************************
 */
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -45,7 +46,7 @@
 
 /* Configure the enum type of allocator.																*/
 enum allocator_type_e {
-	ALLOCATOR_COMMON,
+	ALLOCATOR_COMMON = 1u,
 };
 
 /**
@@ -55,11 +56,11 @@ enum allocator_type_e {
 struct allocator_control_s {
 	struct {
 		/* @brief This function will initialize the allocator struct.									*/
-		void (*init)(void **allocator,
-					 void (*lack_of_memory)(void));
+		errno_t(*init)(void **allocator,
+					   void (*lack_of_memory)(void));
 
-		/* @brief This function will destroy the allocator struct.										*/
-		void (*destroy)(void **allocator);
+		  /* @brief This function will destroy the allocator struct.										*/
+		errno_t(*destroy)(void **allocator);
 
 		/* @brief This function will configure the exceptions of allocator struct.					    */
 		void (*exception)(void **allocator,
@@ -73,8 +74,8 @@ struct allocator_control_s {
 
 	/* @brief This function will deallocates the storage referenced by the pointer block,
 			  which must be a pointer obtained by an earlier call to allocate().						*/
-	void (*deallocate)(void *allocator,
-					   void *block, ALLOCATOR_GLOBAL_CFG_SIZE_TYPE count);
+	errno_t(*deallocate)(void *allocator,
+						 void *block, ALLOCATOR_GLOBAL_CFG_SIZE_TYPE count);
 };
 
 /*
