@@ -125,8 +125,7 @@ struct at_message_queue_control_s at_message_queue_ctrl = {
  */
 
 errno_t at_message_queue_control_exchange(struct at_message_queue_s *message_queue,
-										  void *message,
-										  at_size_t subscriber);
+										  struct at_message_queue_message_package_s *message_package);
 
 /*
 *********************************************************************************************************
@@ -394,8 +393,7 @@ errno_t at_message_queue_control_configuration_destroy(struct at_message_queue_s
  */
 
 errno_t at_message_queue_control_exchange(struct at_message_queue_s *message_queue,
-										  void *message,
-										  at_size_t subscriber)
+										  struct at_message_queue_message_package_s *message_package)
 {
 	assert(message_queue);
 
@@ -403,13 +401,13 @@ errno_t at_message_queue_control_exchange(struct at_message_queue_s *message_que
 
 	if (NULL == (queue = message_queue->queue_manager_package.control_ptr->lookup
 				 .search(message_queue->queue_manager_package.data_structure_ptr,
-						 subscriber))) {
+						 message_package->subscriber))) {
 		return 1;
 	}
 
 	if (message_queue->queue_control_ptr->modifiers
 		.insert(queue,
-				message)) {
+				message_package)) {
 		return 2;
 	}
 
@@ -428,7 +426,7 @@ at_size_t at_message_queue_control_membership_join(struct at_message_queue_s *me
 {
 	assert(message_queue);
 
-	struct at_message_queue_message_package_s message_package = { 0 };
+	struct at_message_queue_queue_package_s message_package = { 0 };
 
 	if (message_queue->queue_control_ptr->configuration										/* Initialize the queue */
 		.init(&message_package.queue)) {
@@ -466,7 +464,7 @@ errno_t at_message_queue_control_membership_quit(struct at_message_queue_s *mess
 	void *queue = NULL;
 
 	if (NULL == (queue = message_queue->queue_manager_package.control_ptr->lookup
-				 .search(message_queue->queue_manager_package.data_structure_ptr,					/* Search the queue via the key that who are you */
+				 .search(message_queue->queue_manager_package.data_structure_ptr,			/* Search the queue via the key that who are you */
 						 who_are_you))) {
 		return 1;
 	}
@@ -493,17 +491,28 @@ errno_t at_message_queue_control_membership_quit(struct at_message_queue_s *mess
  * @return void
  */
 
-errno_t at_message_queue_control_communication_publish(struct at_message_queue_s *message_queue,
-													   void *message,
-													   at_size_t subscriber)
+extern inline errno_t
+at_message_queue_control_communication_publish(struct at_message_queue_s *message_queue,
+											   void *message,
+											   at_size_t subscriber,
+											   at_size_t publisher)
 {
 	assert(message_queue);
+	assert(message);
 
-	message_queue->exchange_ptr(message_queue,												/* Exchange the message into the queue */
-								message,
-								subscriber);
+	struct at_message_queue_message_package_s
+		*message_package_ptr = NULL;
 
-	return 0;
+	if (NULL == (message_package_ptr = calloc(1, sizeof(struct at_message_queue_message_package_s)))) {
+		return -1;
+	}
+
+	message_package_ptr->message = message;
+	message_package_ptr->publisher = publisher;
+	message_package_ptr->subscriber = subscriber;
+
+	return message_queue->exchange_ptr(message_queue,										/* Exchange the message into the queue */
+									   message_package_ptr);
 }
 
 /**
@@ -514,25 +523,27 @@ errno_t at_message_queue_control_communication_publish(struct at_message_queue_s
  * @return void
  */
 
-void *at_message_queue_control_communication_subscribe(struct at_message_queue_s *message_queue,
-													   at_size_t who_am_i)
+struct at_message_queue_message_package_s
+	at_message_queue_control_communication_subscribe(struct at_message_queue_s *message_queue,
+													 at_size_t who_am_i)
 {
 	assert(message_queue);
 	assert(0 <= who_am_i);
 
-	void *message = NULL;
 	void *queue = NULL;
+	struct at_message_queue_message_package_s
+		*message_package = NULL;
 
 	if (NULL == (queue = message_queue->queue_manager_package.control_ptr->lookup
 				 .search(message_queue->queue_manager_package.data_structure_ptr,
 						 who_am_i))) {
-		return NULL;
+		return (struct at_message_queue_message_package_s) { NULL };
 	}
 
-	if (NULL == (message = message_queue->queue_control_ptr->element_access					/* Access the message element in the queue */
-				 .at(queue))) {
-		return NULL;
+	if (NULL == (message_package = message_queue->queue_control_ptr->element_access
+				 .at(queue))) {																/* Access the message element in the queue */
+		return (struct at_message_queue_message_package_s) { NULL };
 	}
 
-	return message;
+	return *message_package;
 }

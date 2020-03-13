@@ -18,3 +18,4 @@ _______________reop_stack_issue_______________
 
 2020-03-13:
 	1、red black tree 节点的 data.content 需特化，排除红黑树节点标识。
+	2、疑惑 reb black tree 存储指针深度是否太深；

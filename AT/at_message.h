@@ -35,8 +35,7 @@
  */
 
 typedef errno_t(*at_message_queue_exchange_ftp)(struct at_message_queue_s *message_queue,
-												void *message,
-												at_size_t subscriber);
+												struct at_message_queue_message_package_s *message_package);
 
 /**
  * @brief This type is the at message structure.
@@ -103,10 +102,12 @@ struct at_message_queue_control_s {
 	struct {
 		errno_t(*publish)(struct at_message_queue_s *message_queue,
 						  void *message,
-						  at_size_t subscriber);
+						  at_size_t subscriber,
+						  at_size_t publisher);
 
-		void *(*subscribe)(struct at_message_queue_s *message_queue,
-						   at_size_t who_am_i);
+		struct at_message_queue_message_package_s
+		(*subscribe)(struct at_message_queue_s *message_queue,
+					 at_size_t who_am_i);
 	}communication;
 };
 
@@ -114,7 +115,7 @@ struct at_message_queue_control_s {
  * @brief This type is the at message queue message package structure.
  */
 
-struct at_message_queue_message_package_s {
+struct at_message_queue_queue_package_s {
 	at_size_t id;
 
 	void *queue;
@@ -124,11 +125,11 @@ struct at_message_queue_message_package_s {
  * @brief This type is the at message queue message package structure.
  */
 
-struct at_message_queue_message__package_s {
+struct at_message_queue_message_package_s {
+	void *message;
+
 	at_size_t publisher;
 	at_size_t subscriber;
-
-	void *message;
 };
 
 /*
@@ -255,18 +256,20 @@ errno_t at_message_queue_control_membership_quit(struct at_message_queue_s *mess
 
 errno_t at_message_queue_control_communication_publish(struct at_message_queue_s *message_queue,
 													   void *message,
-													   at_size_t subscriber);
+													   at_size_t subscriber,
+													   at_size_t publisher);
 
-  /**
-   * @brief This function will subscribe a message from the message queue pool.
-   *
-   * @param void
-   *
-   * @return void
-   */
+/**
+ * @brief This function will subscribe a message from the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
 
-void *at_message_queue_control_communication_subscribe(struct at_message_queue_s *message_queue,
-													   at_size_t who_am_i);
+struct at_message_queue_message_package_s
+	at_message_queue_control_communication_subscribe(struct at_message_queue_s *message_queue,
+													 at_size_t who_am_i);
 
 /*
 *********************************************************************************************************

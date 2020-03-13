@@ -53,7 +53,7 @@ void main(void)
 											 &at_red_black_tree_control_package,
 											 &at_list_queue_control_package);
 
-	char *message = NULL;
+	struct at_message_queue_message_package_s message_package = { 0 };
 	at_size_t who_am_i = 0;
 
 	if (0 == (who_am_i = at_message_queue_ctrl.membership.join(message_queue))) {
@@ -65,30 +65,30 @@ void main(void)
 	}
 
 	if (at_message_queue_ctrl.communication
-		.publish(message_queue, "can you see me.publish.1?", 1)) {
+		.publish(message_queue, "can you see me.publish.1?", 1, 1)) {
 		return;
 	}
 
 	if (at_message_queue_ctrl.communication
-		.publish(message_queue, "can you see me.publish.2?", 2)) {
+		.publish(message_queue, "can you see me.publish.2?", 2, 1)) {
 		return;
 	}
 
-	if (NULL == (message = at_message_queue_ctrl.communication
-				 .subscribe(message_queue, 1))) {
+	if (NULL == (message_package = at_message_queue_ctrl.communication
+				 .subscribe(message_queue, 1)).message) {
 		return;
 	}
 
-	printf("message queue.communication.subscribe:\"%s\"\r\n",
-		   message);
+	printf("message queue.communication.subscribe:\"%s\" form %d to %d \r\n",
+		(char *)message_package.message, message_package.publisher, message_package.subscriber);
 
-	if (NULL == (message = at_message_queue_ctrl.communication
-				 .subscribe(message_queue, 2))) {
+	if (NULL == (message_package = at_message_queue_ctrl.communication
+				 .subscribe(message_queue, 2)).message) {
 		return;
 	}
 
-	printf("message queue.communication.subscribe:\"%s\"\r\n",
-		   message);
+	printf("message queue.communication.subscribe:\"%s\" form %d to %d \r\n",
+		(char *)message_package.message, message_package.publisher, message_package.subscriber);
 
 	if (at_message_queue_ctrl.membership.quit(message_queue,
 											  1)) {
