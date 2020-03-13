@@ -46,28 +46,56 @@ HANDLE thread_handle_hardware_layer = 0;
 
 void main(void)
 {
-	void *priority_queue = NULL;
+	at_message_queue_stp message_queue = NULL;
 
-	at_list_priority_queue_package.configuration.init(&priority_queue);
+	at_message_queue_ctrl.configuration.init(&message_queue,
+											 NULL,
+											 &at_red_black_tree_control_package,
+											 &at_list_queue_control_package);
 
-	char
-		*first = "first",
-		*second = "second",
-		*third = "third";
+	char *message = NULL;
+	at_size_t who_am_i = 0;
 
-	at_list_priority_queue_package.modifiers.push(priority_queue, first);
-	at_list_priority_queue_package.modifiers.push(priority_queue, third);
-	at_list_priority_queue_package.modifiers.push(priority_queue, second);
+	if (0 == (who_am_i = at_message_queue_ctrl.membership.join(message_queue))) {
+		return;
+	}
 
-	printf("top is:\"%s\"\r\n",
-		(char *)at_list_priority_queue_package.element_access.top(priority_queue));
+	if (0 == (who_am_i = at_message_queue_ctrl.membership.join(message_queue))) {
+		return;
+	}
 
-	at_list_priority_queue_package.modifiers.pop(priority_queue);
+	if (at_message_queue_ctrl.communication
+		.publish(message_queue, "can you see me.publish.1?", 1)) {
+		return;
+	}
 
-	printf("top is:\"%s\"\r\n",
-		(char *)at_list_priority_queue_package.element_access.top(priority_queue));
+	if (at_message_queue_ctrl.communication
+		.publish(message_queue, "can you see me.publish.2?", 2)) {
+		return;
+	}
 
-	at_list_priority_queue_package.configuration.destroy(&priority_queue);
+	if (NULL == (message = at_message_queue_ctrl.communication
+				 .subscribe(message_queue, 1))) {
+		return;
+	}
+
+	printf("message queue.communication.subscribe:\"%s\"\r\n",
+		   message);
+
+	if (NULL == (message = at_message_queue_ctrl.communication
+				 .subscribe(message_queue, 2))) {
+		return;
+	}
+
+	printf("message queue.communication.subscribe:\"%s\"\r\n",
+		   message);
+
+	if (at_message_queue_ctrl.membership.quit(message_queue,
+											  1)) {
+		return;
+	}
+
+	at_message_queue_ctrl.configuration.destroy(&message_queue);
 
 	main_platform_support_package_init();
 

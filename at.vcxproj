@@ -150,6 +150,7 @@
     <ClCompile Include="AT\at_data_structure_template.c" />
     <ClCompile Include="AT\at_timeout.c" />
     <ClCompile Include="Container\allocator_common.c" />
+    <ClCompile Include="Container\binary_search_tree.c" />
     <ClCompile Include="Container\compare.c" />
     <ClCompile Include="Container\container_adaptor_def.c" />
     <ClCompile Include="Container\container_def.c" />
@@ -157,8 +158,10 @@
     <ClCompile Include="Container\list_family.c" />
     <ClCompile Include="Container\priority_queue.c" />
     <ClCompile Include="Container\queue.c" />
+    <ClCompile Include="Container\red_black_tree.c" />
     <ClCompile Include="Container\sort.c" />
     <ClCompile Include="Container\stack.c" />
+    <ClCompile Include="Container\tree_family.c" />
     <ClCompile Include="Main\main.c" />
     <ClCompile Include="Time Manage\clocker.c" />
     <ClCompile Include="Time Manage\delay.c" />
@@ -183,6 +186,7 @@
     <ClInclude Include="Container\allocator_common.h" />
     <ClInclude Include="Container\allocator_def.h" />
     <ClInclude Include="Container\array_family.h" />
+    <ClInclude Include="Container\binary_search_tree.h" />
     <ClInclude Include="Container\compare.h" />
     <ClInclude Include="Container\container_adatpor_pte_def.h" />
     <ClInclude Include="Container\container_cfg.h" />
@@ -192,8 +196,10 @@
     <ClInclude Include="Container\list_family.h" />
     <ClInclude Include="Container\priority_queue.h" />
     <ClInclude Include="Container\queue.h" />
+    <ClInclude Include="Container\red_black_tree.h" />
     <ClInclude Include="Container\sort.h" />
     <ClInclude Include="Container\stack.h" />
+    <ClInclude Include="Container\tree_family.h" />
     <ClInclude Include="Container\vector.h" />
     <ClInclude Include="Time Manage\clocker.h" />
     <ClInclude Include="Time Manage\delay.h" />

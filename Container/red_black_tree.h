@@ -7,8 +7,8 @@
 *********************************************************************************************************
 */
 
-#ifndef __AT_DATA_STRUCTURE_TEMPLATE_H
-#define __AT_DATA_STRUCTURE_TEMPLATE_H
+#ifndef __RED_BLACK_TREE_H
+#define __RED_BLACK_TREE_H
 
 /*
 *********************************************************************************************************
@@ -16,13 +16,7 @@
 *********************************************************************************************************
 */
 
-#include "at_def.h"
-
-/* Data Structure Include file																		    */
-#include "stack.h"
-#include "queue.h"
-#include "priority_queue.h"
-#include "red_black_tree.h"
+#include "binary_search_tree.h"
 
 /*
 *********************************************************************************************************
@@ -30,8 +24,14 @@
 *********************************************************************************************************
 */
 
-/* Configure    if enable debug.                                                                        */
-#define AT_TASK_DATA_STRUCTURE_CFG_DEBUG_EN										    0u
+/* Configure    the type of allocator.                                                                  */
+#define RED_BLACK_TREE_CFG_ALLOCATOR_TYPE								    ALLOCATOR_COMMON
+
+/* Configure    if enable integrated structure.                                                         */
+#define RED_BLACK_TREE_CFG_INTEGRATED_STRUCTURE_MODE_EN					1u
+
+/* Configure    if enable debug mode.																	*/
+#define RED_BLACK_TREE_CFG_DEBUG_EN											0u
 
 /*
 *********************************************************************************************************
@@ -39,11 +39,32 @@
 *********************************************************************************************************
 */
 
+/* Configure    red-black-tree type.																	*/
+typedef struct tree_family_s
+*red_black_tree_stp,
+**red_black_tree_stpp;;
+
 /*
 *********************************************************************************************************
 *								            FUNCTION PROTOTYPES
 *********************************************************************************************************
 */
+
+/**
+ * @brief This function will initialize the tree struct
+ *
+ * @param tree the pointer to the tree struct pointer
+ * @param element_size the element memory size of the tree struct
+ * @param assign the pointer to the assign element handler of the specified data type
+ * @param free the pointer to the free element handler of the specified data type
+ *
+ * @return NONE
+ */
+
+void red_black_tree_control_configuration_init(red_black_tree_stpp tree,
+											   container_size_t element_size,
+											   generic_type_element_assign_t assign,
+											   generic_type_element_free_t free);
 
 /*
 *********************************************************************************************************
@@ -51,70 +72,10 @@
 *********************************************************************************************************
 */
 
-#ifdef __STACK_H
-
-/**
- * @brief This struct will contain all the at task list stack control functions.
- */
-
-extern struct at_data_structure_control_package_s at_list_stack_control_package;
-
-#else
-
-#error  "Please transplant a good data structure package fit the data structure that at needs \
-            They are the stack!"
-
-#endif // __STACK_H
-
-#ifdef __QUEUE_H
-
-/**
- * @brief This struct will contain all the at task list stack control functions.
- */
-
-extern struct at_data_structure_control_package_s at_list_queue_control_package;
-
-#else
-
-#error  "Please transplant a good data structure package fit the data structure that at needs \
-            They are the queue!"
-
-#endif // __QUEUE_H
-
-#ifdef __PRIORITY_QUEUE_H
-
-/**
- * @brief This struct will contain all the at task list stack control functions.
- */
-
-extern struct at_data_structure_control_package_s at_list_priority_queue_control_package;
-
-#else
-
-#error  "Please transplant a good data structure package fit the data structure that at needs \
-            They are the priority queue!"
-
-#endif // __PRIORITY_QUEUE_H
-
-#ifdef __RED_BLACK_TREE_H
-
-/**
- * @brief This struct will contain all the at task list stack control functions.
- */
-
-extern struct at_data_structure_control_package_s at_red_black_tree_control_package;
-
-#else
-
-#error  "Please transplant a good data structure package fit the data structure that at needs \
-            They are the red black tree!"
-
-#endif // __RED_BLACK_TREE_H
-
 /*
 *********************************************************************************************************
 *                                             MODULE END
 *********************************************************************************************************
 */
 
-#endif // !__AT_DATA_STRUCTURE_TEMPLATE_H
+#endif // !__RED_BLACK_TREE_H

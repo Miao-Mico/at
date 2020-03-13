@@ -6,6 +6,8 @@
 
 #include "at_task.h"
 
+#include "at_device.h"
+
 #include "at_message.h"
 
 /*
@@ -41,14 +43,15 @@
 struct at_task_os_s {
 	bool os_running;
 
-	struct {
-		struct at_task_s *ready;
-		struct at_task_s *suspend;
-	}list_table[AT_TASK_CFG_PRIORITY_MAX];
+	at_task_size_t priority_max;
 
 	at_task_size_t priority;
 
-	at_task_size_t priority_max;
+	struct {
+		struct at_task_s *ready;
+		struct at_task_s *suspend;
+	}task_list[AT_TASK_CFG_PRIORITY_MAX];
+
 	struct at_task_s *running_task_ptr;
 };
 
@@ -117,7 +120,7 @@ struct at_task_s *at_task_os_idle_task;
  * @brief This struct is the body of at task os.
  */
 
-struct at_data_structure_package_s *at_task_os_task_list_package =
+struct at_data_structure_control_package_s *at_task_os_task_list_package =
 	&AT_TASK_CFG_USER_DEFINED_READY_LIST_DATA_STRUCTURE;
 
 /**
@@ -176,13 +179,13 @@ errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os)
 	}
 
 	for (size_t cnt = 0; cnt < AT_TASK_CFG_PRIORITY_MAX; cnt++) {							/* Initialize the ready lists */
-		if (at_task_os_task_list_package->configuration.
-			init(&(*task_os)->list_table[cnt].ready)) {
+		if (at_task_os_task_list_package->configuration
+			.init(&(*task_os)->task_list[cnt].ready)) {
 			return 1;
 		}
 
-		if (at_task_os_task_list_package->configuration.
-			init(&(*task_os)->list_table[cnt].suspend)) {
+		if (at_task_os_task_list_package->configuration
+			.init(&(*task_os)->task_list[cnt].suspend)) {
 			return 2;
 		}
 	}
@@ -231,27 +234,28 @@ errno_t at_task_control_os_configuration_destroy(struct at_task_os_s **task_os)
 
 	for (size_t cnt = 0; cnt < AT_TASK_CFG_PRIORITY_MAX; cnt++) {							/* Destroy the at task list group of the priorities,total have _PRIORITY_MAX */
 		group_priority = 																	/* Get the list group of the priority */
-			((void **)(*task_os)->list_table + cnt * AT_TASK_CFG_LIST_STACK_COUNT);
+			((void **)(*task_os)->task_list + cnt * AT_TASK_CFG_LIST_STACK_COUNT);
 
 		for (size_t ct = 0; ct < AT_TASK_CFG_LIST_STACK_COUNT; ct++) {						/* Destroy the lists of this group,total have _LIST_STACK_COUNT */
 			list_priority = *((void **)group_priority + ct);								/* Get the one list of the group */
 
-			size_priority_list = (at_task_size_t)at_task_os_task_list_package->capacity.
-				size(list_priority);														/* Get the size of the list */
+			size_priority_list = (at_task_size_t)at_task_os_task_list_package->capacity
+				.size(list_priority);														/* Get the size of the list */
 
 			for (size_t c = 0; c < size_priority_list; c++) {								/* Destroy the tasks in the list,total have size_priority_list */
-				task_priority_list = (void **)at_task_os_task_list_package->element_access.
-					top(list_priority);
-				at_task_control_task_configuration_destroy(*task_os, &(struct at_task_s *)task_priority_list);
+				task_priority_list = (void **)at_task_os_task_list_package->element_access
+					.at(list_priority);
+				at_task_control_task_configuration_destroy(*task_os,
+														   &(struct at_task_s *)task_priority_list);
 
-				at_task_os_task_list_package->modifiers.pop(list_priority);
+				at_task_os_task_list_package->modifiers.delete(list_priority);
 			}
 		}
 																							/* TODO: put it into the above for loop */
 		at_task_os_task_list_package->configuration.										/* Destroy the stack */
-			destroy(&(*task_os)->list_table[cnt].ready);
+			destroy(&(*task_os)->task_list[cnt].ready);
 		at_task_os_task_list_package->configuration.
-			destroy(&(*task_os)->list_table[cnt].suspend);
+			destroy(&(*task_os)->task_list[cnt].suspend);
 	}
 
 	(*task_os) = NULL;
@@ -290,11 +294,11 @@ void at_task_control_os_task_switcher(struct at_task_os_s *task_os,
 	assert(task_os);
 	assert(task);
 
-	at_task_os_task_list_package->modifiers.
-		pop(task_os->list_table[priority].ready);
+	at_task_os_task_list_package->modifiers
+		.delete(task_os->task_list[priority].ready);
 
-	at_task_os_task_list_package->modifiers.
-		push(task_os->list_table[priority].ready, task);
+	at_task_os_task_list_package->modifiers
+		.insert(task_os->task_list[priority].ready, task);
 }
 
 /**
@@ -337,8 +341,8 @@ void at_task_control_os_scheduler(struct at_task_os_s *task_os)
 
 	priority = at_task_control_os_inquire_highest_priority(task_os);						/* Get the highest priority */
 
-	task_ready = at_task_os_task_list_package->element_access.								/* Get the top task block of this priority ready list */
-		top(task_os->list_table[priority].ready);
+	task_ready = at_task_os_task_list_package->element_access								/* Get the top task block of this priority ready list */
+		.at(task_os->task_list[priority].ready);
 
 	if (NULL == task_ready) {
 		goto PRIORITY_MANAGE;																/* Manage the priority */
@@ -387,19 +391,19 @@ void at_task_control_os_core(struct at_task_os_s *task_os, void *arg_list)
 
 		msg_load = true;
 
-		//if (task_os->priority_max == task_os->running_task_ptr->info.priority) {			/* First run should be the highest priority task */
-		//	highest_priority = true;
-		//}
+		if (task_os->priority_max == task_os->running_task_ptr->info.priority) {			/* First run should be the highest priority task */
+			highest_priority = true;
+		}
 
-		//if (false == highest_priority) {
-		//	return;
-		//}
+		if (false == highest_priority) {
+			return;
+		}
 
 		task_os->running_task_ptr->function(msg);											/* Run the function of the task */
 
 		if ((at_task_size_t)AT_TASK_CFG_PRIORITY_MAX - 1 ==									/* When the idle task */
 			task_os->running_task_ptr->info.priority) {
-			//highest_priority = false;
+			highest_priority = false;
 			msg_load = false;
 		}
 	}
@@ -435,14 +439,14 @@ errno_t at_task_control_task_configuration_init(struct at_task_os_s *task_os,
 		case AT_TASK_OPTION_RUN:
 			(*task)->info.status = AT_TASK_STATUS_READY;									/* Set the ready status of the task */
 
-			at_task_os_task_list_package->modifiers.
-				push(task_os->list_table[priority].ready, *task);							/* Push the task address into the ready list of this priority */
+			at_task_os_task_list_package->modifiers
+				.insert(task_os->task_list[priority].ready, *task);							/* Push the task address into the ready list of this priority */
 			break;
 		case AT_TASK_OPTION_SUSPEND:
 			(*task)->info.status = AT_TASK_STATUS_SUSPEND;									/* Set the ready status of the task */
 
-			at_task_os_task_list_package->modifiers.
-				push(task_os->list_table[priority].suspend, *task);							/* Push the task address into the suspend list of this priority */
+			at_task_os_task_list_package->modifiers
+				.insert(task_os->task_list[priority].suspend, *task);						/* Push the task address into the suspend list of this priority */
 			break;
 		default:
 			break;
@@ -507,15 +511,15 @@ at_task_control_task_configuration_suspend(struct at_task_os_s *task_os,
 
 	void *task_addr = NULL;
 
-	if (NULL == (task_addr = at_task_os_task_list_package->element_access.
-				 top(task_os->list_table[task->info.priority].ready))) {
+	if (NULL == (task_addr = at_task_os_task_list_package->element_access
+				 .at(task_os->task_list[task->info.priority].ready))) {
 		return 1;
 	}
 
-	at_task_os_task_list_package->modifiers.
-		push(task_os->list_table[task->info.priority].suspend, task_addr);
-	at_task_os_task_list_package->modifiers.
-		pop(task_os->list_table[task->info.priority].ready);
+	at_task_os_task_list_package->modifiers
+		.insert(task_os->task_list[task->info.priority].suspend, task_addr);
+	at_task_os_task_list_package->modifiers
+		.delete(task_os->task_list[task->info.priority].ready);
 
 	return 0;
 }
@@ -543,15 +547,15 @@ at_task_control_task_configuration_resume(struct at_task_os_s *task_os,
 
 	void *task_addr = NULL;
 
-	if (NULL == (task_addr = at_task_os_task_list_package->element_access.
-				 top(task_os->list_table[task->info.priority].suspend))) {
+	if (NULL == (task_addr = at_task_os_task_list_package->element_access
+				 .at(task_os->task_list[task->info.priority].suspend))) {
 		return 2;
 	}
 
-	at_task_os_task_list_package->modifiers.
-		push(task_os->list_table[task->info.priority].ready, task_addr);
-	at_task_os_task_list_package->modifiers.
-		pop(task_os->list_table[task->info.priority].suspend);
+	at_task_os_task_list_package->modifiers
+		.insert(task_os->task_list[task->info.priority].ready, task_addr);
+	at_task_os_task_list_package->modifiers
+		.delete(task_os->task_list[task->info.priority].suspend);
 
 	return 0;
 }

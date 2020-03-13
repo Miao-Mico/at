@@ -25,13 +25,34 @@
 */
 
 /**
- * @brief This struct is the body of at message.
+ * @brief This type is the at message structure.
  */
 
 struct at_message_s {
 	void *transmit_queue;
 
 	void *feedback_stack;
+
+	void *at_task_message_router_stack;
+
+	void *at_message_router_stack;
+};
+
+/**
+ * @brief This type is the at message structure.
+ */
+
+struct at_message_queue_s {
+	struct {
+		at_size_t cnt_routers;
+		at_size_t seed_who_am_i;
+	}info;
+
+	struct at_data_structure_package_s queue_manager_package;
+
+	struct at_data_structure_control_package_s *queue_control_ptr;
+
+	at_message_queue_exchange_ftp exchange_ptr;
 };
 
 /*
@@ -50,14 +71,14 @@ struct at_message_s {
  * @brief This struct will contain all the at task list stack control functions.
  */
 
-struct at_data_structure_package_s *at_message_transmit_list_queue_package =
+struct at_data_structure_control_package_s *at_message_transmit_list_queue_package =
 	&AT_MESSAGE_CFG_USER_DEFINED_TRANSMIT_MESSAGE_POOL_DATA_STRUCTURE;
 
 /**
  * @brief This struct will contain all the at task list stack control functions.
  */
 
-struct at_data_structure_package_s *at_message_feedback_list_stack_package =
+struct at_data_structure_control_package_s *at_message_feedback_list_stack_package =
 	&AT_MESSAGE_CFG_USER_DEFINED_FEEDBACK_MESSAGE_POOL_DATA_STRUCTURE;
 
 /**
@@ -74,11 +95,38 @@ struct at_message_control_s at_message_ctrl = {
 	.feedback.load = at_message_control_feedback_load,
 };
 
+/**
+ * @brief This struct is the body of at message queue control struct.
+ */
+
+struct at_message_queue_control_s at_message_queue_ctrl = {
+	.configuration.init = at_message_queue_control_configuration_init,
+	.configuration.destroy = at_message_queue_control_configuration_destroy,
+
+	.membership.join = at_message_queue_control_membership_join,
+	.membership.quit = at_message_queue_control_membership_quit,
+
+	.communication.publish = at_message_queue_control_communication_publish,
+	.communication.subscribe = at_message_queue_control_communication_subscribe
+};
+
 /*
 *********************************************************************************************************
 *                                      LOCAL FUNCTION PROTOTYPES
 *********************************************************************************************************
 */
+
+/**
+ * @brief This function will publish a message into the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_message_queue_control_exchange(struct at_message_queue_s *message_queue,
+										  void *message,
+										  at_size_t subscriber);
 
 /*
 *********************************************************************************************************
@@ -182,6 +230,7 @@ errno_t at_message_control_transmit_deposit(struct at_message_s *message,
 			return 1;
 		}
 
+		msg_grp->len[ct] = len;
 		msg_grp->pool[ct++] = msg_cpy;
 	} while (ct < cnt &&
 		(str = va_arg(va_ptr, void *),
@@ -190,7 +239,7 @@ errno_t at_message_control_transmit_deposit(struct at_message_s *message,
 	va_end(va_ptr);
 
 	if (at_message_transmit_list_queue_package->modifiers.
-		push(message->transmit_queue, msg_grp)) {											/* Push the str group into the queue */
+		insert(message->transmit_queue, msg_grp)) {											/* Push the str group into the queue */
 		return 2;
 	}
 
@@ -211,16 +260,16 @@ struct at_message_transmit_group_s at_message_control_transmit_load(struct at_me
 		msg_grp = { 0 },
 		*msg_grp_ptr = NULL;
 
-	if (NULL == (msg_grp_ptr = at_message_transmit_list_queue_package->element_access.
-				 top(message->transmit_queue))) {
-		return (struct at_message_transmit_group_s) { 0, NULL, NULL, NULL };
+	if (NULL == (msg_grp_ptr = at_message_transmit_list_queue_package->element_access
+				 .at(message->transmit_queue))) {
+		return (struct at_message_transmit_group_s) { 0 };
 	}
 
 	msg_grp = *msg_grp_ptr;
 
 	if (at_message_transmit_list_queue_package->modifiers.
-		pop(message->transmit_queue)) {
-		return (struct at_message_transmit_group_s) { 0, NULL, NULL, NULL };
+		delete(message->transmit_queue)) {
+		return (struct at_message_transmit_group_s) { 0 };
 	}
 
 	return msg_grp;
@@ -248,7 +297,7 @@ errno_t at_message_control_feedback_deposit(struct at_message_s *message,
 	}
 
 	if (at_message_feedback_list_stack_package->modifiers.
-		push(message->feedback_stack, msg_cpy)) {
+		insert(message->feedback_stack, msg_cpy)) {
 		return 2;
 	}
 
@@ -267,15 +316,223 @@ void *at_message_control_feedback_load(struct at_message_s *message)
 {
 	void *str = NULL;
 
-	if (NULL == (str = at_message_feedback_list_stack_package->element_access.
-				 top(message->feedback_stack))) {
+	if (NULL == (str = at_message_feedback_list_stack_package->element_access
+				 .at(message->feedback_stack))) {
 		return NULL;
 	}
 
 	if (at_message_feedback_list_stack_package->modifiers.
-		pop(message->feedback_stack)) {
+		delete(message->feedback_stack)) {
 		return NULL;
 	}
 
 	return str;
+}
+
+/**
+ * @brief This function will publish a message into the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_message_queue_control_configuration_init(struct at_message_queue_s **message_queue,
+													at_message_queue_exchange_ftp exchange,
+													struct at_data_structure_control_package_s *manager_control,
+													struct at_data_structure_control_package_s *queue_control)
+{
+	assert(message_queue);
+
+	if (NULL == ((*message_queue) = calloc(1, sizeof(struct at_message_queue_s)))) {
+		return -1;
+	}
+
+	if (manager_control->configuration
+		.init(&(*message_queue)->queue_manager_package.data_structure_ptr)) {
+		return 1;
+	}
+
+	if (NULL == exchange) {
+		exchange = at_message_queue_control_exchange;
+	}
+
+	(*message_queue)->exchange_ptr = exchange;
+	(*message_queue)->queue_manager_package.control_ptr = manager_control;
+	(*message_queue)->queue_control_ptr = queue_control;
+	(*message_queue)->exchange_ptr = exchange;
+
+	return 0;
+}
+
+/**
+ * @brief This function will publish a message into the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_message_queue_control_configuration_destroy(struct at_message_queue_s **message_queue)
+{
+	assert(message_queue);
+	assert(*message_queue);
+
+	free((*message_queue));
+
+	(*message_queue) = NULL;
+
+	return 0;
+}
+
+/**
+ * @brief This function will publish a message into the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_message_queue_control_exchange(struct at_message_queue_s *message_queue,
+										  void *message,
+										  at_size_t subscriber)
+{
+	assert(message_queue);
+
+	void *queue = NULL;
+
+	if (NULL == (queue = message_queue->queue_manager_package.control_ptr->lookup
+				 .search(message_queue->queue_manager_package.data_structure_ptr,
+						 subscriber))) {
+		return 1;
+	}
+
+	if (message_queue->queue_control_ptr->modifiers
+		.insert(queue,
+				message)) {
+		return 2;
+	}
+
+	return 0;
+}
+
+/**
+ * @brief This function will make a queue for the caller,then join it into the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+at_size_t at_message_queue_control_membership_join(struct at_message_queue_s *message_queue)
+{
+	assert(message_queue);
+
+	struct at_message_queue_message_package_s message_package = { 0 };
+
+	if (message_queue->queue_control_ptr->configuration										/* Initialize the queue */
+		.init(&message_package.queue)) {
+		return 1;
+	}
+
+	message_package.id = ++message_queue->info.seed_who_am_i;
+
+	printf("at message queue.membership.join.queue %d :%p\r\n", message_package.id, message_package.queue);
+
+	if (message_queue->queue_manager_package.control_ptr->modifiers							/* Push the queue into the manage pool */
+		.insert(message_queue->queue_manager_package.data_structure_ptr,
+				&message_package)) {
+		return 2;
+	}
+
+	message_queue->info.cnt_routers++;														/* Increase the router count */
+
+	return message_package.id;
+}
+
+/**
+ * @brief This function will quit from message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_message_queue_control_membership_quit(struct at_message_queue_s *message_queue,
+												 at_size_t who_are_you)
+{
+	assert(message_queue);
+
+	void *queue = NULL;
+
+	if (NULL == (queue = message_queue->queue_manager_package.control_ptr->lookup
+				 .search(message_queue->queue_manager_package.data_structure_ptr,					/* Search the queue via the key that who are you */
+						 who_are_you))) {
+		return 1;
+	}
+
+	if (message_queue->queue_manager_package.control_ptr->modifiers							/* Push the queue into the manage pool */
+		.delete(message_queue->queue_manager_package.data_structure_ptr,
+				queue, 0)) {
+		return 2;
+	}
+
+	if (message_queue->queue_control_ptr->configuration										/* Destroy the queue */
+		.destroy(&queue)) {
+		return 3;
+	}
+
+	return 0;
+}
+
+/**
+ * @brief This function will publish a message into the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_message_queue_control_communication_publish(struct at_message_queue_s *message_queue,
+													   void *message,
+													   at_size_t subscriber)
+{
+	assert(message_queue);
+
+	message_queue->exchange_ptr(message_queue,												/* Exchange the message into the queue */
+								message,
+								subscriber);
+
+	return 0;
+}
+
+/**
+ * @brief This function will subscribe a message from the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+void *at_message_queue_control_communication_subscribe(struct at_message_queue_s *message_queue,
+													   at_size_t who_am_i)
+{
+	assert(message_queue);
+	assert(0 <= who_am_i);
+
+	void *message = NULL;
+	void *queue = NULL;
+
+	if (NULL == (queue = message_queue->queue_manager_package.control_ptr->lookup
+				 .search(message_queue->queue_manager_package.data_structure_ptr,
+						 who_am_i))) {
+		return NULL;
+	}
+
+	if (NULL == (message = message_queue->queue_control_ptr->element_access					/* Access the message element in the queue */
+				 .at(queue))) {
+		return NULL;
+	}
+
+	return message;
 }

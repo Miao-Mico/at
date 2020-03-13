@@ -53,15 +53,15 @@
  */
 
 errno_t at_windows_control_configuration_mount(struct at_device_package_s *package,
-								 void *arg_list);
+											   void *arg_list);
 
- /**
-  * @brief This function will deinitialize the i/o stream of the windows.
-  *
-  * @param void
-  *
-  * @return void
-  */
+/**
+ * @brief This function will deinitialize the i/o stream of the windows.
+ *
+ * @param void
+ *
+ * @return void
+ */
 
 errno_t at_windows_control_configuration_demount(struct at_device_package_s *package);
 
@@ -177,7 +177,7 @@ at_device_package_packer_windows_file_stream(struct at_device_package_s **packag
 	(*package)->transmit.send = (at_import_func_t)at_windows_control_transmit_send;
 	(*package)->transmit.receive = (at_import_func_t)at_windows_control_transmit_receive;
 
-    (*package)->interrupt = (at_import_func_t)at_windows_control_interrupt;
+	(*package)->interrupt = (at_import_func_t)at_windows_control_interrupt;
 
 	(*package)->verify.device = (at_import_func_t)at_windows_control_verify_device;
 	(*package)->verify.package = (at_import_func_t)at_windows_control_verify_package;
@@ -202,7 +202,7 @@ at_device_package_packer_windows_file_stream(struct at_device_package_s **packag
 
 static inline errno_t
 at_windows_control_configuration_mount(struct at_device_package_s *package,
-						 void *arg_list)
+									   void *arg_list)
 {
 	assert(package);
 	assert(arg_list);
@@ -215,15 +215,15 @@ at_windows_control_configuration_mount(struct at_device_package_s *package,
 		return -1;
 	}
 
-	if (err = fopen_s(((FILE **)file + 0), 
-                      *((char **)arg_list + 0), 
-                      *((char **)arg_list + 1))) {
+	if (err = fopen_s(((FILE **)file + 0),
+					  *((char **)arg_list + 0),
+					  *((char **)arg_list + 1))) {
 		return err;
 	}
 
-	if (err = fopen_s(((FILE **)file + 1), 
-                      *((char **)arg_list + 2), 
-                      *((char **)arg_list + 3))) {
+	if (err = fopen_s(((FILE **)file + 1),
+					  *((char **)arg_list + 2),
+					  *((char **)arg_list + 3))) {
 		return err;
 	}
 
@@ -286,15 +286,15 @@ static inline void
 {
 	static char *string = NULL;
 
-    static size_t len_last = 0;
+	static size_t len_last = 0;
 
-    if (len_last < len) {                                                                   /* If last length is greater than this time,reallocate the memory */
+	if (len_last < len) {                                                                   /* If last length is greater than this time,reallocate the memory */
 		if (NULL != string) {
 			free(string);
-        }
+		}
 
-        string = calloc(1, sizeof(char) * (len + 1));
-    }
+		string = calloc(1, sizeof(char) * (len + 1));
+	}
 
 	if (NULL == string) {
 		return NULL;
@@ -316,19 +316,19 @@ static inline void
 static inline struct at_device_package_interrupt_return_s
 *at_windows_control_interrupt(void *device)
 {
-    assert(device);
+	assert(device);
 
-    static struct at_device_package_interrupt_return_s
-        interrupt = { 0 };
+	static struct at_device_package_interrupt_return_s
+		interrupt = { 0 };
 
-    #define INTERRUPT_DATA_LENGTH_MAX             1                                         /* Receive 1 char type once,simulate the usart */
+	#define INTERRUPT_DATA_LENGTH_MAX             1                                         /* Receive 1 char type once,simulate the usart */
 
-	interrupt.string = 
-        at_windows_control_transmit_receive(device, INTERRUPT_DATA_LENGTH_MAX + 1);
+	interrupt.string =
+		at_windows_control_transmit_receive(device, INTERRUPT_DATA_LENGTH_MAX + 1);
 
-    interrupt.count = INTERRUPT_DATA_LENGTH_MAX;
+	interrupt.count = INTERRUPT_DATA_LENGTH_MAX;
 
-    return &interrupt;
+	return &interrupt;
 }
 
 /**

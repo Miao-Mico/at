@@ -57,6 +57,7 @@ typedef void *(*at_import_func_t)(void *arg_list, ...);
 struct at_message_transmit_group_s {
 	at_size_t count;
 
+	at_size_t len[AT_CFG_TRANSMIT_LEVEL_MAX];
 	char *pool[AT_CFG_TRANSMIT_LEVEL_MAX];
 };
 
@@ -127,24 +128,45 @@ typedef errno_t(*at_device_package_packer_func_t)(struct at_device_package_s **p
  * @brief This struct will contain all the at task control functions.
  */
 
-struct at_data_structure_package_s {
+struct at_data_structure_control_package_s {
 	struct {
-		at_import_func_t init;
-		at_import_func_t destroy;
+		errno_t(*init)(void **data_structure);
+		errno_t(*destroy)(void **data_structure);
 	}configuration;
 
 	struct {
-		at_import_func_t size;
+		at_size_t(*size)(void *data_structure);
 	}capacity;
 
-	struct {
-		at_import_func_t top;
-	}element_access;
+	union {
+		struct {
+			void *(*search)(void *data_structure,
+							at_size_t key);
+		}lookup;
+
+		struct {
+			void *(*at)(void *data_structure,
+						...);
+		}element_access;
+	};
 
 	struct {
-		at_import_func_t push;
-		at_import_func_t pop;
+		errno_t(*insert)(void *data_structure,
+						 void *element,
+						 ...);
+		errno_t(*delete)(void *data_structure,
+						 ...);
 	}modifiers;
+};
+
+/**
+ * @brief This struct will contain all the at task control functions.
+ */
+
+struct at_data_structure_package_s {
+	struct at_data_structure_control_package_s *control_ptr;
+
+	void *data_structure_ptr;
 };
 
 /**

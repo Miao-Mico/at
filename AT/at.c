@@ -45,10 +45,10 @@
  * @brief This struct will contain all the universal vector functions address.
  */
 
-struct at_information_s {
-	bool switch_status;
-
-	void *multi_level_transmit_ptr;
+struct at_transmit_s {
+	at_size_t multi_level_transmit_level;
+	char *multi_level_transmit_promise_msg;
+	char *multi_level_transmit_msg;
 };
 
 /**
@@ -64,7 +64,9 @@ struct at_exception_s {
  */
 
 struct at_s {
-	struct at_information_s info;
+	bool switch_status;
+
+	struct at_transmit_s transmit;
 
 	struct at_device_package_s *device_package;
 
@@ -161,8 +163,6 @@ errno_t at_control_configuration_init(struct at_s **at,
 
 	if (NULL == device_package ||															/* If the device_package is NULL */
 		NULL == ((*at) = calloc(1, sizeof(struct at_s)))) {
-		//(*at)->exception.hardware_not_ready();
-
 		return 1;
 	}
 
@@ -183,7 +183,7 @@ errno_t at_control_configuration_init(struct at_s **at,
 		return 2;
 	}
 
-	(*at)->info.switch_status = true;
+	(*at)->switch_status = true;
 
 	return 0;
 }
@@ -310,6 +310,8 @@ errno_t at_control_transmit_single_level_send(struct at_s *at,
 											 ist_pack[0], ist_pack[1],
 											 ist_pack[2], ist_pack[2]);
 
+	at_control_transmit_multi_level_send(at, 0, NULL, 0);
+
 	return 0;
 }
 
@@ -402,7 +404,9 @@ errno_t at_control_transmit_multi_level_generate(struct at_s *at,
  */
 
 errno_t at_control_transmit_multi_level_send(struct at_s *at,
-											 at_size_t level)
+											 at_size_t level,
+											 char *promise_msg,
+											 at_size_t len)
 {
 	assert(at);
 
@@ -417,10 +421,15 @@ errno_t at_control_transmit_multi_level_send(struct at_s *at,
 		}
 	}
 
-	if (NULL == msg.pool[level] ||
-		at->device_package->transmit.
-		send(at->device_package->device_ptr, msg.pool[level], strlen(msg.pool[level]))) {
-		return 2;
+	if (NULL == promise_msg) {
+		if (NULL == msg.pool[level] ||
+			at->device_package->transmit.
+			send(at->device_package->device_ptr, msg.pool[level], strlen(msg.pool[level]))) {
+			return 2;
+		}
+	} else {
+		memcpy(at->transmit.multi_level_transmit_msg, msg.pool[level], len);
+		memcpy(at->transmit.multi_level_transmit_promise_msg, promise_msg, len);
 	}
 
 	return 0;
@@ -478,7 +487,7 @@ at_control_device_interrupt(struct at_s *at)
 	}
 
 	at_message_ctrl.feedback.
-		deposit(at->message, string, count+1);												/* Deposit the string into the feedback memory pool */
+		deposit(at->message, string, count + 1);												/* Deposit the string into the feedback memory pool */
 
 	memset(string, '\0', count);															/* Clean the static string and count */
 	count = 0;
@@ -568,5 +577,9 @@ void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list)
 {
 	printf("at task os.multi level transmit task.message:\"%s\" \r\n", (char *)arg_list);
 
-
+	/*if (NULL == msg.pool[level] ||
+		at->device_package->transmit.
+		send(at->device_package->device_ptr, msg.pool[level], strlen(msg.pool[level]))) {
+		return 2;
+	}*/
 }

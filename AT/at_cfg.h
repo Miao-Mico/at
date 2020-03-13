@@ -61,10 +61,10 @@
 #if (AT_MESSAGE_CFG_USER_DEFINED_MESSAGE_POOL_DATA_STRUCTURE_EN)
 
 #define AT_MESSAGE_CFG_USER_DEFINED_TRANSMIT_MESSAGE_POOL_DATA_STRUCTURE                                \
-    (at_list_queue_package)
+    (at_list_queue_control_package)
 
 #define AT_MESSAGE_CFG_USER_DEFINED_FEEDBACK_MESSAGE_POOL_DATA_STRUCTURE                                \
-    (at_list_stack_package)
+    (at_list_stack_control_package)
 
 #endif // (AT_MESSAGE_CFG_USER_DEFINED_MESSAGE_POOL_DATA_STRUCTURE_EN)
 
@@ -90,7 +90,7 @@
 #if (AT_TASK_CFG_USER_DEFINED_READY_LIST_DATA_STRUCTURE_EN)
 
 #define AT_TASK_CFG_USER_DEFINED_READY_LIST_DATA_STRUCTURE                                              \
-    (at_list_stack_package)
+    (at_list_stack_control_package)
 
 #endif // (AT_TASK_CFG_USER_DEFINED_READY_LIST_DATA_STRUCTURE_EN)
 

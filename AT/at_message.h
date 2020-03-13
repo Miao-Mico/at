@@ -31,6 +31,22 @@
 */
 
 /**
+ * @brief This type is the at message queue exchange function typedef.
+ */
+
+typedef errno_t(*at_message_queue_exchange_ftp)(struct at_message_queue_s *message_queue,
+												void *message,
+												at_size_t subscriber);
+
+/**
+ * @brief This type is the at message structure.
+ */
+
+typedef struct at_message_queue_s
+*at_message_queue_stp,
+**at_message_queue_stpp;
+
+/**
  * @brief This struct is the body of at message control struct.
  */
 
@@ -41,26 +57,78 @@ struct at_message_control_s {
 		errno_t(*destroy)(struct at_message_s **message);
 	}configuration;
 
-    struct {
+	struct {
 		void *(*transmit)(struct at_message_s *message);
 
 		void *(*feedback)(struct at_message_s *message);
-    }element_access;
+	}element_access;
 
 	struct {
 		errno_t(*deposit)(struct at_message_s *message,
-                          at_size_t cnt,
+						  at_size_t cnt,
 						  void *str, at_size_t len, ...);
 
-        struct at_message_transmit_group_s(*load)(struct at_message_s *message);
+		struct at_message_transmit_group_s(*load)(struct at_message_s *message);
 	}transmit;
 
 	struct {
 		errno_t(*deposit)(struct at_message_s *message,
-                          void *str, at_size_t len);
+						  void *str, at_size_t len);
 
 		void *(*load)(struct at_message_s *message);
 	}feedback;
+};
+
+/**
+ * @brief This struct is the body of at message queue control struct.
+ */
+
+struct at_message_queue_control_s {
+	struct {
+		errno_t(*init)(struct at_message_queue_s **message_queue,
+					   at_message_queue_exchange_ftp exchange,
+					   struct at_data_structure_control_package_s *manager_control,
+					   struct at_data_structure_control_package_s *queue_control);
+
+		errno_t(*destroy)(struct at_message_queue_s **message_queue);
+	}configuration;
+
+	struct {
+		at_size_t(*join)(struct at_message_queue_s *message_queue);
+
+		errno_t(*quit)(struct at_message_queue_s *message_queue,
+					   at_size_t who_are_you);
+	}membership;
+
+	struct {
+		errno_t(*publish)(struct at_message_queue_s *message_queue,
+						  void *message,
+						  at_size_t subscriber);
+
+		void *(*subscribe)(struct at_message_queue_s *message_queue,
+						   at_size_t who_am_i);
+	}communication;
+};
+
+/**
+ * @brief This type is the at message queue message package structure.
+ */
+
+struct at_message_queue_message_package_s {
+	at_size_t id;
+
+	void *queue;
+};
+
+/**
+ * @brief This type is the at message queue message package structure.
+ */
+
+struct at_message_queue_message__package_s {
+	at_size_t publisher;
+	at_size_t subscriber;
+
+	void *message;
 };
 
 /*
@@ -98,7 +166,7 @@ errno_t at_message_control_configuration_destroy(struct at_message_s **message);
  */
 
 errno_t at_message_control_transmit_deposit(struct at_message_s *message,
-                                            at_size_t cnt,
+											at_size_t cnt,
 											void *str, at_size_t len, ...);
 
 /**
@@ -120,7 +188,7 @@ struct at_message_transmit_group_s at_message_control_transmit_load(struct at_me
  */
 
 errno_t at_message_control_feedback_deposit(struct at_message_s *message,
-                                            void *str,
+											void *str,
 											at_size_t len);
 
 /**
@@ -133,6 +201,73 @@ errno_t at_message_control_feedback_deposit(struct at_message_s *message,
 
 void *at_message_control_feedback_load(struct at_message_s *message);
 
+/**
+ * @brief This function will publish a message into the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_message_queue_control_configuration_init(struct at_message_queue_s **message_queue,
+													at_message_queue_exchange_ftp exchange,
+													struct at_data_structure_control_package_s *manager_control,
+													struct at_data_structure_control_package_s *queue_control);
+
+/**
+ * @brief This function will publish a message into the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_message_queue_control_configuration_destroy(struct at_message_queue_s **message_queue);
+
+/**
+ * @brief This function will make a queue for the caller,then join it into the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+at_size_t at_message_queue_control_membership_join(struct at_message_queue_s *message_queue);
+
+/**
+ * @brief This function will quit from message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_message_queue_control_membership_quit(struct at_message_queue_s *message_queue,
+												 at_size_t who_are_you);
+
+/**
+ * @brief This function will publish a message into the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_message_queue_control_communication_publish(struct at_message_queue_s *message_queue,
+													   void *message,
+													   at_size_t subscriber);
+
+  /**
+   * @brief This function will subscribe a message from the message queue pool.
+   *
+   * @param void
+   *
+   * @return void
+   */
+
+void *at_message_queue_control_communication_subscribe(struct at_message_queue_s *message_queue,
+													   at_size_t who_am_i);
+
 /*
 *********************************************************************************************************
 *                                       EXTERN GLOBAL VARIABLES
@@ -144,6 +279,12 @@ void *at_message_control_feedback_load(struct at_message_s *message);
  */
 
 extern struct at_message_control_s at_message_ctrl;
+
+/**
+ * @brief This struct is the body of at message queue control struct.
+ */
+
+extern struct at_message_queue_control_s at_message_queue_ctrl;
 
 /*
 *********************************************************************************************************
