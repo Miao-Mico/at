@@ -22,7 +22,7 @@
 
 #endif // (AT_TASK_CFG_IDLE_TASK_EN)
 
-#define AT_TASK_CFG_LIST_STACK_COUNT											2u
+#define AT_TASK_CFG_LIST_STACK_COUNT										2u
 
 /*
 *********************************************************************************************************
@@ -42,6 +42,8 @@
 
 struct at_task_os_s {
 	bool os_running;
+
+	struct at_message_queue_unit_s mq_unit;
 
 	at_task_size_t priority_max;
 
@@ -84,6 +86,8 @@ struct at_task_info_s {
 	char *name;
 
 	at_task_size_t priority;
+
+	struct at_message_queue_unit_s mq_unit;
 };
 
 /**
@@ -168,7 +172,8 @@ void at_task_os_control_idle_task_function(void *arg);
  * @return void
  */
 
-errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os)
+errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os,
+											  struct at_message_queue_s *message_queue)
 {
 	assert(task_os);
 
@@ -176,6 +181,13 @@ errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os)
 
 	if (NULL == ((*task_os) = calloc(1, sizeof(struct at_task_os_s)))) {
 		return -1;
+	}
+
+	if (NULL == ((*task_os)->mq_unit.mq_ptr = message_queue) &&		/* Initialize the message queue */
+		at_message_queue_ctrl.configuration
+		.init(&(*task_os)->mq_unit.mq_ptr,
+			  NULL, NULL, NULL)) {
+		return 4;
 	}
 
 	for (size_t cnt = 0; cnt < AT_TASK_CFG_PRIORITY_MAX; cnt++) {							/* Initialize the ready lists */
@@ -197,7 +209,7 @@ errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os)
 												"at task os.idle task",
 												at_task_os_control_idle_task_function,
 												AT_TASK_CFG_IDLE_TASK_PRIORITY,
-												NULL,
+												true,
 												NULL,
 												0)) {
 		return 3;
@@ -385,7 +397,7 @@ void at_task_control_os_core(struct at_task_os_s *task_os, void *arg_list)
 		static bool highest_priority = false;
 
 		if (false == msg_load &&
-			NULL == (msg = at_message_ctrl.feedback.load(arg_list))) {						/* Load the feedback message when at the priority max */
+			NULL == (msg = at_message_pool_ctrl.feedback.load(arg_list))) {					/* Load the feedback message when at the priority max */
 			return;
 		}
 
@@ -399,7 +411,12 @@ void at_task_control_os_core(struct at_task_os_s *task_os, void *arg_list)
 			return;
 		}
 
-		task_os->running_task_ptr->function(msg);											/* Run the function of the task */
+		struct at_task_function_arguement_list_package_s
+			arg_list_package = {
+			.mq_unit_ptr = &task_os->running_task_ptr->info.mq_unit,
+		};
+
+		task_os->running_task_ptr->function(&arg_list_package);								/* Run the function of the task */
 
 		if ((at_task_size_t)AT_TASK_CFG_PRIORITY_MAX - 1 ==									/* When the idle task */
 			task_os->running_task_ptr->info.priority) {
@@ -422,7 +439,7 @@ errno_t at_task_control_task_configuration_init(struct at_task_os_s *task_os,
 												char *name,
 												void *func,
 												at_task_size_t priority,
-												void *arg_list,
+												bool join_message_queue,
 												void *hook,
 												enum at_task_option_e opt)
 {
@@ -451,6 +468,15 @@ errno_t at_task_control_task_configuration_init(struct at_task_os_s *task_os,
 		default:
 			break;
 	}
+
+	if (join_message_queue &&
+		!((*task)->info.mq_unit.id
+		  = at_message_queue_ctrl.membership
+		  .join(task_os->mq_unit.mq_ptr))) {												/* Join the message queue */
+		return 1;
+	}
+
+	(*task)->info.mq_unit.mq_ptr = task_os->mq_unit.mq_ptr;
 
 	if (task_os->priority_max > priority) {													/* Record the highest priority of the task os */
 		task_os->priority_max = priority;
@@ -570,5 +596,5 @@ at_task_control_task_configuration_resume(struct at_task_os_s *task_os,
 
 void at_task_os_control_idle_task_function(void *arg_list)
 {
-	printf("at task os.idle task.message:\"%s\" \r\n", (char *)arg_list);
+	printf("at task os.idle task.message:\"%s\" \r\n", (char *)NULL);
 }

@@ -55,10 +55,7 @@ struct at_control_s {
 			errno_t(*generate)(struct at_s *at,
 							   char *format, char *ist, ...);
 
-			errno_t(*send)(struct at_s *at,
-						   at_size_t level,
-						   char *promise_msg,
-						   at_size_t len);
+			errno_t(*send)(struct at_s *at);
 		} multi_level;
 	}transmit;
 
@@ -137,10 +134,7 @@ errno_t at_control_transmit_multi_level_generate(struct at_s *at,
  * @return void
  */
 
-errno_t at_control_transmit_multi_level_send(struct at_s *at,
-											 at_size_t level,
-											 char *promise_msg,
-											 at_size_t len);
+errno_t at_control_transmit_multi_level_send(struct at_s *at);
 
 /**
  * @brief This function will handle the soft logic of the at task os.

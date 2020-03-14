@@ -68,13 +68,15 @@ struct at_s {
 
 	struct at_transmit_s transmit;
 
-	struct at_device_package_s *device_package;
-
-	struct at_task_os_s *task_os;
-
-	struct at_message_s *message;
-
 	struct at_exception_s exception;
+
+	struct at_message_queue_unit_s message_queue_unit;
+
+	struct at_device_package_s *device_package_ptr;
+
+	struct at_task_os_s *task_os_ptr;
+
+	struct at_message_pool_s *message_pool_ptr;
 };
 
 /**
@@ -85,6 +87,19 @@ struct at_transmit_format_analysis_package_s {
 	at_size_t level;
 	at_size_t total_count;
 	at_size_t *info;
+	at_size_t *info_answer;
+};
+
+/**
+ * @brief This struct will contain all the information from the format analysis.
+ */
+
+struct at_multi_level_transmit_request_package_s {
+	struct at_message_transmit_group_s *msg_grp;
+
+	void *device_ptr;
+
+	errno_t(*send)(void *device, void *message, at_size_t len);
 };
 
 /*
@@ -121,7 +136,7 @@ struct at_task_s *at_task_os_multi_level_transmit_task = NULL;
 */
 
 /**
- * @brief This function will retarget the device_package of at struct to the device_package specified.
+ * @brief This function will retarget the device_package_ptr of at struct to the device_package_ptr specified.
  *
  * @param void
  *
@@ -141,6 +156,19 @@ struct at_transmit_format_analysis_package_s
 
 void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list);
 
+/**
+ * @brief This function will be called when the multi level transmit generate.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+static inline struct at_message_transmit_unit_s
+at_control_transmit_multi_level_generate_core(struct at_transmit_format_analysis_package_s format_package,
+											  char *ist_package[AT_CFG_TRANSMIT_GENERATE_PIECES_MAX],
+											  at_size_t current_level);
+
 /*
 *********************************************************************************************************
 *                                            FUNCTIONS
@@ -156,31 +184,55 @@ void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list);
  */
 
 errno_t at_control_configuration_init(struct at_s **at,
-									  struct at_device_package_s *device_package)
+									  struct at_device_package_s *device_package_ptr)
 {
 	assert(at);
-	assert(device_package);
+	assert(device_package_ptr);
 
-	if (NULL == device_package ||															/* If the device_package is NULL */
+	if (NULL == device_package_ptr ||														/* If the device_package_ptr is NULL */
 		NULL == ((*at) = calloc(1, sizeof(struct at_s)))) {
 		return 1;
 	}
 
-	at_message_ctrl.configuration.init(&(*at)->message);									/* Initialize the at message */
-
-	at_task_ctrl.os.configuration.init(&(*at)->task_os);									/* Initialize the at task os */
-
-	at_task_ctrl.task.configuration.init((*at)->task_os,									/* Initialize the multi level transmit task */
-										 &at_task_os_multi_level_transmit_task,
-										 "at task os.multi level transmit task",
-										 at_control_at_task_os_multi_level_transmit_task_function,
-										 0,													/* Set Max priority */
-										 NULL,
-										 NULL,
-										 0);
-
-	if (at_control_configuration_retarget(*at, NULL, NULL, device_package)) {				/* Target the at to the device_package */
+	if (at_message_pool_ctrl.configuration
+		.init(&(*at)->message_pool_ptr)) {													/* Initialize the at message pool */
 		return 2;
+	}
+
+	if (at_message_queue_ctrl.configuration
+		.init(&(*at)->message_queue_unit.mq_ptr,											/* Initialize the at message queue */
+			  NULL,
+			  NULL,
+			  NULL)) {
+		return 3;
+	}
+
+	if (0 == ((*at)->message_queue_unit.id
+			  = at_message_queue_ctrl.membership
+			  .join((*at)->message_queue_unit.mq_ptr))) {									/* Join the at message queue */
+		return 4;
+	}
+
+	if (at_task_ctrl.os.configuration
+		.init(&(*at)->task_os_ptr,
+		(*at)->message_queue_unit.mq_ptr)) {												/* Initialize the at task os */
+		return 5;
+	}
+
+	if (at_task_ctrl.task.configuration
+		.init((*at)->task_os_ptr,															/* Initialize the multi level transmit task */
+			  &at_task_os_multi_level_transmit_task,
+			  "at task os.multi level transmit task",
+			  at_control_at_task_os_multi_level_transmit_task_function,
+			  0,																			/* Set Max priority */
+			  true,
+			  NULL,
+			  0)) {
+		return 6;
+	}
+
+	if (at_control_configuration_retarget(*at, NULL, NULL, device_package_ptr)) {			/* Target the at to the device_package_ptr */
+		return 7;
 	}
 
 	(*at)->switch_status = true;
@@ -201,11 +253,11 @@ errno_t at_control_configuration_destroy(struct at_s **at)
 	assert(at);
 	assert(*at);
 
-	if (at_message_ctrl.configuration.destroy(&(*at)->message)) {							/* Destroy the at message */
+	if (at_message_pool_ctrl.configuration.destroy(&(*at)->message_pool_ptr)) {				/* Destroy the at message */
 		return 1;
 	}
 
-	if (at_task_ctrl.os.configuration.destroy(&(*at)->task_os)) {							/* Destroy the at tack os */
+	if (at_task_ctrl.os.configuration.destroy(&(*at)->task_os_ptr)) {						/* Destroy the at tack os */
 		return 2;
 	}
 
@@ -217,7 +269,7 @@ errno_t at_control_configuration_destroy(struct at_s **at)
 }
 
 /**
- * @brief This function will retarget the device_package of at struct to the device_package specified.
+ * @brief This function will retarget the device_package_ptr of at struct to the device_package_ptr specified.
  *
  * @param void
  *
@@ -234,7 +286,7 @@ errno_t at_control_configuration_retarget(struct at_s *at,
 	void *devide_package_cpy = NULL;
 
 	if (NULL == device_package &&
-		NULL == (device_package = at->device_package)) {									/* If not appoint the device_package pack */
+		NULL == (device_package = at->device_package_ptr)) {								/* If not appoint the device_package pack */
 		return 1;
 	}
 
@@ -242,12 +294,12 @@ errno_t at_control_configuration_retarget(struct at_s *at,
 		return 2;
 	}
 
-	if (NULL != at->device_package &&
+	if (NULL != at->device_package_ptr &&
 		device_package->device_pack_id ==
-		at->device_package->device_pack_id) {												/* If device_pack is the same as the device_pack of at */
+		at->device_package_ptr->device_pack_id) {											/* If device_pack is the same as the device_pack of at */
 		goto CONFIG_DEVICE_PART;
 	} else {
-		free(at->device_package);															/* Deallocate the outdated device package */
+		free(at->device_package_ptr);														/* Deallocate the outdated device package */
 	}
 
 	if (NULL == (devide_package_cpy =
@@ -259,7 +311,7 @@ errno_t at_control_configuration_retarget(struct at_s *at,
 	memcpy(devide_package_cpy, device_package,
 		   sizeof(struct at_device_package_s));												/* Copy a new device package */
 
-	at->device_package = devide_package_cpy;
+	at->device_package_ptr = devide_package_cpy;
 
 CONFIG_DEVICE_PART:
 
@@ -310,7 +362,7 @@ errno_t at_control_transmit_single_level_send(struct at_s *at,
 											 ist_pack[0], ist_pack[1],
 											 ist_pack[2], ist_pack[2]);
 
-	at_control_transmit_multi_level_send(at, 0, NULL, 0);
+	at_control_transmit_multi_level_send(at);
 
 	return 0;
 }
@@ -332,22 +384,24 @@ errno_t at_control_transmit_multi_level_generate(struct at_s *at,
 
 	va_list va_ptr;
 
-	va_start(va_ptr, ist);
-
 	struct at_transmit_format_analysis_package_s
-		format_package = at_control_transmit_format_analysis(format);
+		format_package = { 0 };
 
-	if (AT_CFG_TRANSMIT_LEVEL_MAX < format_package.level) {
+	struct at_message_transmit_unit_s
+		transmit_unit[AT_CFG_TRANSMIT_GENERATE_LEVELS_MAX] = { 0 };
+
+	char
+		*ist_package[AT_CFG_TRANSMIT_GENERATE_PIECES_MAX] = { NULL };						/* Allow MAX _TRANSMIT_GENERATE_PIECES_MAX pieces */
+
+	if (AT_CFG_TRANSMIT_LEVEL_MAX < (format_package
+									 = at_control_transmit_format_analysis(format))
+		.level) {
 		return 1;
 	}
 
-	char
-		*ist_package[AT_CFG_TRANSMIT_GENERATE_PIECES_MAX] = { NULL },
-		string_package[AT_CFG_TRANSMIT_GENERATE_LEVELS_MAX]									/* Allow MAX _TRANSMIT_GENERATE_LEVELS_MAX level */
-		[AT_CFG_TRANSMIT_GENERATE_STRING_LENGTH_MAX] = { 0 };								/* Allow MAX _TRANSMIT_GENERATE_STRING_LENGTH_MAX length */
+	va_start(va_ptr, ist);
 
 	at_size_t cnt = 0;
-
 	do {
 		ist_package[cnt] = ist;																/* Store the ist fragment into the ist package */
 	} while (++cnt < format_package.total_count &&											/* Limit the va_arg() by the format_package */
@@ -357,38 +411,16 @@ errno_t at_control_transmit_multi_level_generate(struct at_s *at,
 	va_end(va_ptr);
 
 	for (size_t level = 0; level < format_package.level; level++) {							/* Merge the fragments into a whole with sprintf() */
-		at_size_t
-			pieces = *(format_package.info + level),
-			count = 0;
-		char
-			format_string[AT_CFG_TRANSMIT_GENERATE_PIECES_EACH_LEVEL_MAX * sizeof("%s")] = { 0 },
-			*ist_pieces[AT_CFG_TRANSMIT_GENERATE_PIECES_EACH_LEVEL_MAX] = { NULL };
-
-		static at_size_t
-			shift = 0;
-
-		if (AT_CFG_TRANSMIT_GENERATE_PIECES_EACH_LEVEL_MAX < pieces) {
-			return 2;
-		}
-
-		do {
-			ist_pieces[count] = ist_package[shift + count];
-			strcat(format_string, "%s");
-		} while (pieces > ++count);
-
-		shift += pieces;																	/* Increase the shift point of the ist package */
-
-		sprintf_s(string_package[level],
-				  AT_CFG_TRANSMIT_GENERATE_STRING_LENGTH_MAX, format_string,
-				  ist_pieces[0], ist_pieces[1], ist_pieces[2], ist_pieces[3]);				/* Allow MAX _PIECES_EACH_LEVEL_MAX pieces each level */
+		transmit_unit[level]
+			= at_control_transmit_multi_level_generate_core(format_package,
+															ist_package,
+															level);
 	}
 
-	if (at_message_ctrl.transmit.
-		deposit(at->message, format_package.level,											/* Deposit the string of each level into the message pool */
-				string_package[0], strlen(string_package[0]),
-				string_package[1], strlen(string_package[1]),
-				string_package[2], strlen(string_package[2]),
-				string_package[3], strlen(string_package[3]))) {
+	if (at_message_pool_ctrl.transmit.
+		deposit(at->message_pool_ptr, format_package.level,									/* Deposit the string of each level into the message pool */
+				&transmit_unit[0], &transmit_unit[1],
+				&transmit_unit[2], &transmit_unit[3])) {
 		return 3;
 	}
 
@@ -403,10 +435,7 @@ errno_t at_control_transmit_multi_level_generate(struct at_s *at,
  * @return void
  */
 
-errno_t at_control_transmit_multi_level_send(struct at_s *at,
-											 at_size_t level,
-											 char *promise_msg,
-											 at_size_t len)
+errno_t at_control_transmit_multi_level_send(struct at_s *at)
 {
 	assert(at);
 
@@ -415,21 +444,40 @@ errno_t at_control_transmit_multi_level_send(struct at_s *at,
 
 	static struct at_message_transmit_group_s msg = { 0 };
 
-	if (level_last >= level) { 																/* If the level is lesser than the level last called. */
-		if (0u == (msg = at_message_ctrl.transmit.load(at->message)).count) {
-			return 1;
-		}
+	if (0u == (msg = at_message_pool_ctrl.transmit
+				.load(at->message_pool_ptr))
+		.count) {
+		return 1;
 	}
 
-	if (NULL == promise_msg) {
-		if (NULL == msg.pool[level] ||
-			at->device_package->transmit.
-			send(at->device_package->device_ptr, msg.pool[level], strlen(msg.pool[level]))) {
-			return 2;
+	if (NULL == msg.units[0].string.ist ||													/* Send the instruction of level 0 directly */
+		0 == at->device_package_ptr->transmit
+		.send(at->device_package_ptr->device_ptr,
+			  msg.units[0].string.ist,
+			  msg.units[0].length.ist)) {
+		return 2;
+	}
+
+	if (1 < msg.count) {																	/* Publish the instruction that above level 0 to multi level transmit task */
+		struct at_multi_level_transmit_request_package_s
+			*request_package = NULL;
+
+		if (NULL == (request_package														/* Allocate the request package */
+					 = calloc(1, sizeof(struct at_multi_level_transmit_request_package_s)))) {
+			return  -1;
 		}
-	} else {
-		memcpy(at->transmit.multi_level_transmit_msg, msg.pool[level], len);
-		memcpy(at->transmit.multi_level_transmit_promise_msg, promise_msg, len);
+
+		request_package->device_ptr = at->device_package_ptr->device_ptr;
+		request_package->msg_grp = &msg;
+		request_package->send = at->device_package_ptr->transmit.send;
+
+		if (at_message_queue_ctrl.communication
+			.publish(at->message_queue_unit.mq_ptr,											/* Publish the request package to task */
+					 request_package,
+					 3,																		/* The message queue id of the multi level transmit level is 3 */
+					 1)) {
+			return 3;
+		}
 	}
 
 	return 0;
@@ -448,7 +496,7 @@ at_control_task_os_tick(struct at_s *at)
 {
 	assert(at);
 
-	at_task_ctrl.os.core(at->task_os, at->message);
+	at_task_ctrl.os.core(at->task_os_ptr, at->message_pool_ptr);
 }
 
 /**
@@ -470,8 +518,8 @@ at_control_device_interrupt(struct at_s *at)
 	static char string[100] = { 0 };
 	static at_size_t count = 0;
 
-	if (NULL == (interrupt_return = (at->device_package->
-									 interrupt(at->device_package->device_ptr)))->string) {
+	if (NULL == (interrupt_return = (at->device_package_ptr->
+									 interrupt(at->device_package_ptr->device_ptr)))->string) {
 		return;
 	}
 
@@ -486,8 +534,8 @@ at_control_device_interrupt(struct at_s *at)
 		goto NOT_FIT;
 	}
 
-	at_message_ctrl.feedback.
-		deposit(at->message, string, count + 1);												/* Deposit the string into the feedback memory pool */
+	at_message_pool_ctrl.feedback.
+		deposit(at->message_pool_ptr, string, count + 1);									/* Deposit the string into the feedback memory pool */
 
 	memset(string, '\0', count);															/* Clean the static string and count */
 	count = 0;
@@ -498,7 +546,7 @@ NOT_FIT:
 }
 
 /**
- * @brief This function will retarget the device_package of at struct to the device_package specified.
+ * @brief This function will analysis the transmit format string.
  *
  * @param void
  *
@@ -510,16 +558,19 @@ struct at_transmit_format_analysis_package_s
 {
 	assert(format);
 
-	/*							EXPLNATION
+	/*										EXPLNATION
 	 *
-	 *				char *format_template = "#2:1:2";
+	 *							char *format_template = "#2:1:@2";
 	 *
-	 *			+ This means: this at transmit instruction group template has two levels,
-	 *				it's first level have 1 piece,and the second level have 2 pieces.
+	 *		+ This means: this at transmit instruction group template has two levels,
+	 *			it's first level have 1 piece,
+	 *			the second level have 2 pieces and it have to pend the answer from the feedback.
 	 *
-	 *			+ So,the format rules are these below:
-	 *				- '#' + 'how much levels'
-	 *				- ':' + 'how much pieces this level contains'
+	 *		+ So,the format rules are these below:
+	 *			- '#' + 'how much levels	= this instruction contains how much levels.
+	 *			- '@' + 'how much pieces 	= this level of instruction has to pend answer,
+	 *											this level of answer contains how much pieces.
+	 *			- ':' + 'how much pieces 	= this level of instruction contains how much pieces.
 	 */
 
 	struct at_transmit_format_analysis_package_s
@@ -532,12 +583,14 @@ struct at_transmit_format_analysis_package_s
 
 	while (format[symbol] != '\0') {
 		if (format[symbol] == '#') {
-			format_package.level = format[symbol + 1] - '0';										/* Set the next the value of symbol as the level */
+			format_package.level = format[symbol + 1] - '0';								/* Set the next the value of symbol as the level */
 
 			get_level = true;
 
 			if (NULL == (format_package.info =
-						 calloc(format_package.level, sizeof(at_size_t)))) {
+						 calloc(format_package.level, sizeof(at_size_t)))
+				|| NULL == (format_package.info_answer =
+							calloc(format_package.level, sizeof(at_size_t)))) {
 				format_package.level = 255;
 
 				goto EXIT;
@@ -550,8 +603,13 @@ struct at_transmit_format_analysis_package_s
 
 				goto EXIT;
 			} else {
-				*(format_package.info + level) = format[symbol + 1] - '0';			/* Set the next the value of symbol as the level information */
+				*(format_package.info + level) = format[symbol + 1] - '0';					/* Set the next the value of symbol as the level information */
 				format_package.total_count += *(format_package.info + level);
+
+				if ('@' == format[symbol + 2]) {
+					*(format_package.info_answer + level) = format[symbol + 3] - '0';					/* Set the next the value of symbol as the level information */
+					format_package.total_count += *(format_package.info_answer + level);
+				}
 
 				level++;
 			}
@@ -575,11 +633,139 @@ EXIT:
 
 void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list)
 {
-	printf("at task os.multi level transmit task.message:\"%s\" \r\n", (char *)arg_list);
+	struct at_task_function_arguement_list_package_s *arg_list_package = arg_list;
 
-	/*if (NULL == msg.pool[level] ||
-		at->device_package->transmit.
-		send(at->device_package->device_ptr, msg.pool[level], strlen(msg.pool[level]))) {
-		return 2;
-	}*/
+	struct at_message_queue_unit_s *mq_unit = arg_list_package->mq_unit_ptr;
+
+	static struct at_message_queue_message_package_s
+		message_package = { 0 };
+
+	static struct at_multi_level_transmit_request_package_s
+		*request_package = NULL;
+
+	static at_size_t count = 0xff;
+
+	printf("at task os.multi level transmit task.enter\r\n");
+
+	if (NULL != request_package
+		&& request_package->msg_grp->count > count) {
+		static errno_t err = 0;
+
+		printf("at task os.multi level transmit task.send:instruction is \"%s\" answer is \"%s\"\r\n",
+			   request_package->msg_grp->units[count].string.ist,
+			   request_package->msg_grp->units[count].string.asw);
+
+		if ('\0' != *request_package->msg_grp->units[count].string.asw) {					/* TODO:string match part */
+			static at_size_t verify_count = 0;
+
+			if (AT_CFG_TRANSMIT_VERIFY_EXPIRE_COUNT_MAX <= verify_count) {					/* Allow MAX _TRANSMIT_VERIFY_OVERDUE_TIME_MAX times */
+				verify_count = 0;
+			} else {
+				verify_count++;
+
+				goto EXIT;
+			}
+		}
+
+		count++;																			/* Only count when answer string matched */
+
+		if (0 == request_package->send(request_package->device_ptr,
+								  request_package->msg_grp->units[count].string.ist,
+								  request_package->msg_grp->units[count].length.ist)) {
+			err = 1;
+			goto EXIT;
+		}
+
+	EXIT:
+
+		return;
+	} else {
+		if (NULL == (request_package = (message_package
+										= at_message_queue_ctrl.communication
+										.subscribe(mq_unit->mq_ptr,
+												   mq_unit->id)).message)) {
+			return;
+		}
+
+		count = 0;
+	}
+}
+
+/**
+ * @brief This function will be called when the multi level transmit generate.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+static inline struct at_message_transmit_unit_s
+at_control_transmit_multi_level_generate_core(struct at_transmit_format_analysis_package_s format_package,
+											  char *ist_package[AT_CFG_TRANSMIT_GENERATE_PIECES_MAX],
+											  at_size_t current_level)
+{
+	static struct at_message_transmit_unit_s
+		transmit_unit = { 0 };
+
+	char format_template[] = "%s%s%s%s";
+
+	char
+		format_string_ist[(AT_CFG_TRANSMIT_GENERATE_PIECES_EACH_LEVEL_MAX << 1) + 1] = { 0 },
+		format_string_asw[(AT_CFG_TRANSMIT_GENERATE_PIECES_EACH_LEVEL_MAX << 1) + 1] = { 0 },
+		*pieces_ist[AT_CFG_TRANSMIT_GENERATE_PIECES_EACH_LEVEL_MAX] = { NULL },
+		*pieces_asw[AT_CFG_TRANSMIT_GENERATE_PIECES_EACH_LEVEL_MAX] = { NULL };
+
+	at_size_t
+		count = 0;
+	static	at_size_t
+		shift = 0;
+
+	transmit_unit.length.ist = *(format_package.info + current_level);						/* Assign the length part of the transmit unit */
+	transmit_unit.length.asw = *(format_package.info_answer + current_level);
+
+	if (NULL == (transmit_unit.string.ist 													/* Allocate the string part of the transmit unit */
+				 = calloc(1, AT_CFG_TRANSMIT_GENERATE_STRING_LENGTH_MAX))					/* Allow MAX _TRANSMIT_GENERATE_STRING_LENGTH_MAX pieces each level */
+		|| NULL == (transmit_unit.string.asw
+					= calloc(1, AT_CFG_TRANSMIT_GENERATE_STRING_LENGTH_MAX))) {
+		return (struct at_message_transmit_unit_s) { (void *)-1 };
+	}
+
+	if (AT_CFG_TRANSMIT_GENERATE_PIECES_EACH_LEVEL_MAX < transmit_unit.length.ist) {
+		return (struct at_message_transmit_unit_s) { (void *)1 };
+	}
+
+	if (0 == current_level) {
+		shift = 0;																			/* Reset the shift point of the ist package */
+	}
+
+	do {
+		pieces_ist[count] = ist_package[shift + count];
+	} while (transmit_unit.length.ist > ++count);
+
+	shift += transmit_unit.length.ist;														/* Increase the shift point of the ist package */
+	count = 0;
+
+	do {
+		pieces_asw[count] = ist_package[shift + count];
+	} while (transmit_unit.length.asw > ++count);
+
+	if (NULL == (memcpy(&format_string_ist, 												/* Clip the format_template into the needed format string */
+						&format_template,
+						transmit_unit.length.ist << 1))
+		|| NULL == (memcpy(&format_string_asw,
+						   &format_template,
+						   transmit_unit.length.asw << 1))) {
+		return (struct at_message_transmit_unit_s) { (void *)2 };
+	}
+
+	transmit_unit.length.ist																/* Assign the length of the transmit_unit.string */
+		= sprintf_s(transmit_unit.string.ist,												/* Format the instruction string into the transmit_unit.string */
+					AT_CFG_TRANSMIT_GENERATE_STRING_LENGTH_MAX, format_string_ist,
+					pieces_ist[0], pieces_ist[1], pieces_ist[2], pieces_ist[3]);			/* Allow MAX _PIECES_EACH_LEVEL_MAX pieces each level */
+	transmit_unit.length.asw
+		= sprintf_s(transmit_unit.string.asw,
+					AT_CFG_TRANSMIT_GENERATE_STRING_LENGTH_MAX, format_string_asw,
+					pieces_asw[0], pieces_asw[1], pieces_asw[2], pieces_asw[3]);
+
+	return transmit_unit;
 }

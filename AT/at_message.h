@@ -49,32 +49,33 @@ typedef struct at_message_queue_s
  * @brief This struct is the body of at message control struct.
  */
 
-struct at_message_control_s {
+struct at_message_pool_control_s {
 	struct {
-		errno_t(*init)(struct at_message_s **message);
+		errno_t(*init)(struct at_message_pool_s **message);
 
-		errno_t(*destroy)(struct at_message_s **message);
+		errno_t(*destroy)(struct at_message_pool_s **message);
 	}configuration;
 
 	struct {
-		void *(*transmit)(struct at_message_s *message);
+		void *(*transmit)(struct at_message_pool_s *message);
 
-		void *(*feedback)(struct at_message_s *message);
+		void *(*feedback)(struct at_message_pool_s *message);
 	}element_access;
 
 	struct {
-		errno_t(*deposit)(struct at_message_s *message,
-						  at_size_t cnt,
-						  void *str, at_size_t len, ...);
+		errno_t(*deposit)(struct at_message_pool_s *message,
+						  at_size_t count,
+						  struct at_message_transmit_unit_s *unit,
+						  ...);
 
-		struct at_message_transmit_group_s(*load)(struct at_message_s *message);
+		struct at_message_transmit_group_s(*load)(struct at_message_pool_s *message);
 	}transmit;
 
 	struct {
-		errno_t(*deposit)(struct at_message_s *message,
+		errno_t(*deposit)(struct at_message_pool_s *message,
 						  void *str, at_size_t len);
 
-		void *(*load)(struct at_message_s *message);
+		void *(*load)(struct at_message_pool_s *message);
 	}feedback;
 };
 
@@ -112,6 +113,16 @@ struct at_message_queue_control_s {
 };
 
 /**
+ * @brief This struct will contain all the at task control functions.
+ */
+
+struct at_message_queue_unit_s {
+	at_size_t id;
+
+	at_message_queue_stp mq_ptr;
+};
+
+/**
  * @brief This type is the at message queue message package structure.
  */
 
@@ -146,7 +157,7 @@ struct at_message_queue_message_package_s {
  * @return void
  */
 
-errno_t at_message_control_configuration_init(struct at_message_s **message);
+errno_t at_message_pool_control_configuration_init(struct at_message_pool_s **message);
 
 /**
  * @brief This function will destroy the at message pool.
@@ -156,7 +167,7 @@ errno_t at_message_control_configuration_init(struct at_message_s **message);
  * @return void
  */
 
-errno_t at_message_control_configuration_destroy(struct at_message_s **message);
+errno_t at_message_pool_control_configuration_destroy(struct at_message_pool_s **message);
 
 /**
  * @brief This function will deposit the at message into the at message pool for transmit.
@@ -166,9 +177,10 @@ errno_t at_message_control_configuration_destroy(struct at_message_s **message);
  * @return void
  */
 
-errno_t at_message_control_transmit_deposit(struct at_message_s *message,
-											at_size_t cnt,
-											void *str, at_size_t len, ...);
+errno_t at_message_pool_control_transmit_deposit(struct at_message_pool_s *message,
+												 at_size_t count,
+												 struct at_message_transmit_unit_s *unit,
+												 ...);
 
 /**
  * @brief This function will load the at message from the at message pool for transmit.
@@ -178,7 +190,7 @@ errno_t at_message_control_transmit_deposit(struct at_message_s *message,
  * @return void
  */
 
-struct at_message_transmit_group_s at_message_control_transmit_load(struct at_message_s *message);
+struct at_message_transmit_group_s at_message_pool_control_transmit_load(struct at_message_pool_s *message);
 
 /**
  * @brief This function will deposit the at message into the at message pool for feedback.
@@ -188,9 +200,9 @@ struct at_message_transmit_group_s at_message_control_transmit_load(struct at_me
  * @return void
  */
 
-errno_t at_message_control_feedback_deposit(struct at_message_s *message,
-											void *str,
-											at_size_t len);
+errno_t at_message_pool_control_feedback_deposit(struct at_message_pool_s *message,
+												 void *str,
+												 at_size_t len);
 
 /**
  * @brief This function will load the at message from the at message pool for feedback.
@@ -200,7 +212,7 @@ errno_t at_message_control_feedback_deposit(struct at_message_s *message,
  * @return void
  */
 
-void *at_message_control_feedback_load(struct at_message_s *message);
+void *at_message_pool_control_feedback_load(struct at_message_pool_s *message);
 
 /**
  * @brief This function will publish a message into the message queue pool.
@@ -281,7 +293,7 @@ struct at_message_queue_message_package_s
  * @brief This struct is the body of at message control struct.
  */
 
-extern struct at_message_control_s at_message_ctrl;
+extern struct at_message_pool_control_s at_message_pool_ctrl;
 
 /**
  * @brief This struct is the body of at message queue control struct.

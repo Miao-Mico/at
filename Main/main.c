@@ -10,8 +10,6 @@
 #include "time_manage_timer_template.h"
 #include "clocker.h"
 
-#include "at_message.h"																		/* Only for this git version,check if the at message is available */
-
 #define MAIN_CFG_CONTROLLER_SEND_TO_FILENAME												\
 	"./Text/peripheral_device_receive.txt"
 #define MAIN_CFG_CONTROLLER_RECEIVE_FROM_FILENAME											\
@@ -46,64 +44,38 @@ HANDLE thread_handle_hardware_layer = 0;
 
 void main(void)
 {
-	at_message_queue_stp message_queue = NULL;
-
-	at_message_queue_ctrl.configuration.init(&message_queue,
-											 NULL,
-											 &at_red_black_tree_control_package,
-											 &at_list_queue_control_package);
-
-	struct at_message_queue_message_package_s message_package = { 0 };
-	at_size_t who_am_i = 0;
-
-	if (0 == (who_am_i = at_message_queue_ctrl.membership.join(message_queue))) {
-		return;
-	}
-
-	if (0 == (who_am_i = at_message_queue_ctrl.membership.join(message_queue))) {
-		return;
-	}
-
-	if (at_message_queue_ctrl.communication
-		.publish(message_queue, "can you see me.publish.1?", 1, 1)) {
-		return;
-	}
-
-	if (at_message_queue_ctrl.communication
-		.publish(message_queue, "can you see me.publish.2?", 2, 1)) {
-		return;
-	}
-
-	if (NULL == (message_package = at_message_queue_ctrl.communication
-				 .subscribe(message_queue, 1)).message) {
-		return;
-	}
-
-	printf("message queue.communication.subscribe:\"%s\" form %d to %d \r\n",
-		(char *)message_package.message, message_package.publisher, message_package.subscriber);
-
-	if (NULL == (message_package = at_message_queue_ctrl.communication
-				 .subscribe(message_queue, 2)).message) {
-		return;
-	}
-
-	printf("message queue.communication.subscribe:\"%s\" form %d to %d \r\n",
-		(char *)message_package.message, message_package.publisher, message_package.subscriber);
-
-	if (at_message_queue_ctrl.membership.quit(message_queue,
-											  1)) {
-		return;
-	}
-
-	at_message_queue_ctrl.configuration.destroy(&message_queue);
-
 	main_platform_support_package_init();
+
+	size_t err = 0;
+
+	if (0 == at_windows_controller_package->transmit.send(at_windows_controller_package->device_ptr,
+													 "test", sizeof("test"))) {
+		return;
+	}
+
+	printf("controller receive:\"%s\"", 
+		   (char*)at_windows_controller_package->transmit.receive(at_windows_controller_package->device_ptr, 100));
+
+	if (0 == at_windows_peripheral_package->transmit.send(at_windows_peripheral_package->device_ptr,
+														  "test", sizeof("test"))) {
+		return;
+	}
+
+	printf("controller receive:\"%s\"",
+		(char *)at_windows_peripheral_package->transmit.receive(at_windows_peripheral_package->device_ptr, 100));
 
 	clocker_ctrl.start(clocker);
 
 	printf("have cost: %lldus \r\n", clocker_ctrl.stop(clocker));
 
 	WaitForSingleObject(thread_handle_hardware_layer, INFINITE);							/* Wait the hardware layer run at least once */
+
+	at_ctrl.transmit.multi_level.generate(at, "#3:1:2:1@1",									/* Generate the multi level at instruction */
+										  "level 1.\r\n",
+										  "level 2.", "\r\n",
+										  "level 3.\r\n", "FILE:__PERIPHERAL_DEVICE_SEND_TXT");
+
+	at_ctrl.transmit.multi_level.send(at);													/* Send the multi level at instruction */
 
 	while (true) {
 		main_software_layer();

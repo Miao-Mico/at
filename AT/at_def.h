@@ -54,11 +54,26 @@ typedef void *(*at_import_func_t)(void *arg_list, ...);
  * @brief This type is the typedef of the at transmit message group.
  */
 
+struct at_message_transmit_unit_s {
+	struct at_transmit_string_unit_s {
+		char *ist;
+		char *asw;
+	}string;
+
+	struct at_transmit_string_length_unit_s {
+		at_size_t ist;
+		at_size_t asw;
+	}length;
+};
+
+/**
+ * @brief This type is the typedef of the at transmit message group.
+ */
+
 struct at_message_transmit_group_s {
 	at_size_t count;
 
-	at_size_t len[AT_CFG_TRANSMIT_LEVEL_MAX];
-	char *pool[AT_CFG_TRANSMIT_LEVEL_MAX];
+	struct at_message_transmit_unit_s units[AT_CFG_TRANSMIT_LEVEL_MAX];
 };
 
 /**

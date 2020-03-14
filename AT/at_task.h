@@ -40,10 +40,23 @@ typedef void (*at_task_function_t)(void *arg_list);
  * @brief This struct will contain all the at task control functions.
  */
 
+struct at_task_function_arguement_list_package_s {
+	void *mq_unit_ptr;
+
+	void *message;
+
+	void *err;
+};
+
+/**
+ * @brief This struct will contain all the at task control functions.
+ */
+
 struct at_task_control_s {
 	struct {
 		struct {
-			errno_t(*init)(struct at_task_os_s **task_os);
+			errno_t(*init)(struct at_task_os_s **task_os,
+						   struct at_message_queue_s *message_queue);
 
 			errno_t(*destroy)(struct at_task_os_s **task_os);
 		}configuration;
@@ -63,7 +76,7 @@ struct at_task_control_s {
 						   char *name,
 						   void *func,
 						   at_task_size_t priority,
-						   void *arg_list,
+						   bool join_message_queue,
 						   void *hook,
 						   enum at_task_option_e opt);
 
@@ -93,7 +106,8 @@ struct at_task_control_s {
  * @return void
  */
 
-errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os);
+errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os,
+											  struct at_message_queue_s *message_queue);
 
 /**
  * @brief This function will destroy the at task os.
@@ -139,7 +153,7 @@ errno_t at_task_control_task_configuration_init(struct at_task_os_s *task_os,
 												char *name,
 												void *func,
 												at_task_size_t priority,
-												void *arg_list,
+												bool join_message_queue,
 												void *hook,
 												enum at_task_option_e opt);
 

@@ -36,6 +36,9 @@
 #define AT_CFG_TRANSMIT_LEVEL_MAX							                3u
 
 /* Configure    if enable integrated structure.                                                         */
+#define AT_CFG_TRANSMIT_VERIFY_EXPIRE_COUNT_MAX						        5u
+
+/* Configure    if enable integrated structure.                                                         */
 #define AT_CFG_INTERGRATED_STRUCTURE_MODE_EN								1u
 
 /* Configure    if enable integrated structure.                                                         */
@@ -58,6 +61,9 @@
 /* Configure    if enable integrated structure.                                                         */
 #define AT_MESSAGE_CFG_USER_DEFINED_MESSAGE_POOL_DATA_STRUCTURE_EN	        1u
 
+/* Configure    if enable integrated structure.                                                         */
+#define AT_MESSAGE_CFG_USER_DEFINED_MESSAGE_QUEUE_DATA_STRUCTURE_EN	        0u
+
 #if (AT_MESSAGE_CFG_USER_DEFINED_MESSAGE_POOL_DATA_STRUCTURE_EN)
 
 #define AT_MESSAGE_CFG_USER_DEFINED_TRANSMIT_MESSAGE_POOL_DATA_STRUCTURE                                \
@@ -67,6 +73,16 @@
     (at_list_stack_control_package)
 
 #endif // (AT_MESSAGE_CFG_USER_DEFINED_MESSAGE_POOL_DATA_STRUCTURE_EN)
+
+#if (AT_MESSAGE_CFG_USER_DEFINED_MESSAGE_QUEUE_DATA_STRUCTURE_EN)
+
+#define AT_MESSAGE_CFG_USER_DEFINED_MESSAGE_QUEUE_QUEUE_MANAGER_DATA_STRUCTURE                          \
+    (NULL)
+
+#define AT_MESSAGE_CFG_USER_DEFINED_MESSAGE_QUEUE_QUEUE_DATA_STRUCTURE                                  \
+    (NULL)
+
+#endif // (AT_MESSAGE_CFG_USER_DEFINED_MESSAGE_QUEUE_DATA_STRUCTURE_EN)
 
 /**
  *                                          A T     T A S K

@@ -79,7 +79,9 @@ Those  *italic* part support for customization, this means if you feel it not ve
 
   This part will let `the message storage` under the command of `the data structure` you select, combining with the at_data_structure. 
 
-  There have two message storage pool in the at suite:
+  Also offer a simple `message queue`, to take over the communication between at control subjects.
+
+  There are two message storage pools in the at suite:
 
   - transmit message pool
 
@@ -90,12 +92,12 @@ Those  *italic* part support for customization, this means if you feel it not ve
   - feedback message pool
 
     About this pool, how about `the stack structure` and it's `FILO` feature?
-
+  
     It is `more important` that `the message receive now`, it may break out suddenly because your initiative communication, than `the message some much more older`.
 
 ## Reference
 
-[stack](https://github.com/Miao-Mico/stack): Another repo of mine. This repo offer data structures.
+[stack](https://github.com/Miao-Mico/stack): Another repository of mine. This repository offer data structures.
 
 ## FAQ
 

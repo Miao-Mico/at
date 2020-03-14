@@ -207,31 +207,29 @@ at_windows_control_configuration_mount(struct at_device_package_s *package,
 	assert(package);
 	assert(arg_list);
 
-	errno_t err = 0;
+	FILE *file_list = NULL;
 
-	FILE *file = calloc(2, sizeof(FILE));
-
-	if (NULL == file) {
+	if (NULL == (file_list = calloc(2, sizeof(FILE)))) {									/* Allocate the file stream list */
 		return -1;
 	}
 
-	if (err = fopen_s(((FILE **)file + 0),
+	if (fopen_s(((FILE **)file_list + 0),													/* Open the file stream */
 					  *((char **)arg_list + 0),
 					  *((char **)arg_list + 1))) {
-		return err;
+		return 1;
 	}
 
-	if (err = fopen_s(((FILE **)file + 1),
+	if (fopen_s(((FILE **)file_list + 1),
 					  *((char **)arg_list + 2),
 					  *((char **)arg_list + 3))) {
-		return err;
+		return 2;
 	}
 
-	if (!at_windows_control_verify_device(file)) {
-		return 200;
+	if (!at_windows_control_verify_device(file_list)) {										/* Verify if the device is valid */
+		return 3;
 	}
 
-	package->device_ptr = file;
+	package->device_ptr = file_list;														/* Assign the file streams as the device */
 
 	return 0;
 }
@@ -268,9 +266,11 @@ at_windows_control_configuration_demount(struct at_device_package_s *package)
 static inline errno_t
 at_windows_control_transmit_send(void *device, void *data, size_t len)
 {
-	fwrite(data, sizeof(char), len, *((void **)device + 0));
+	assert(device);
+	assert(data);
+	assert(0 < len);
 
-	return 0;
+	return fwrite(data, sizeof(char), len, *((void **)device + 0));
 }
 
 /**
@@ -284,6 +284,9 @@ at_windows_control_transmit_send(void *device, void *data, size_t len)
 static inline void
 *at_windows_control_transmit_receive(void *device, size_t len)
 {
+	assert(device);
+	assert(0 < len);
+
 	static char *string = NULL;
 
 	static size_t len_last = 0;
