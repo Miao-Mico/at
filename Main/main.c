@@ -44,9 +44,22 @@ HANDLE thread_handle_hardware_layer = 0;
 
 void main(void)
 {
-	main_platform_support_package_init();
+	FILE* controller = calloc(1,sizeof(FILE));
+	errno_t err = 0;
 
-	size_t err = 0;
+	err = fopen_s(&controller, "./Text/test.txt", "a+");
+
+	if (NULL == controller) {
+		return;
+	}
+
+	char data[] = "aaaaaaa";
+
+	err = fwrite(&data, sizeof(char), sizeof(data), controller);
+
+	return;
+
+	main_platform_support_package_init();
 
 	if (0 == at_windows_controller_package->transmit.send(at_windows_controller_package->device_ptr,
 													 "test", sizeof("test"))) {
@@ -78,7 +91,14 @@ void main(void)
 	at_ctrl.transmit.multi_level.send(at);													/* Send the multi level at instruction */
 
 	while (true) {
+		static char scanf_string[100] = { 0 };
+
 		main_software_layer();
+		scanf_string[99] = scanf("%s", scanf_string);
+
+		if ('0' != scanf_string[0]) {
+			break;
+		}
 	}
 
 	at_windows_peripheral_package->configuration.demount(at_windows_peripheral_package);

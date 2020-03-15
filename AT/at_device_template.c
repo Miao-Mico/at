@@ -214,14 +214,14 @@ at_windows_control_configuration_mount(struct at_device_package_s *package,
 	}
 
 	if (fopen_s(((FILE **)file_list + 0),													/* Open the file stream */
-					  *((char **)arg_list + 0),
-					  *((char **)arg_list + 1))) {
+				*((char **)arg_list + 0),
+				*((char **)arg_list + 1))) {
 		return 1;
 	}
 
 	if (fopen_s(((FILE **)file_list + 1),
-					  *((char **)arg_list + 2),
-					  *((char **)arg_list + 3))) {
+				*((char **)arg_list + 2),
+				*((char **)arg_list + 3))) {
 		return 2;
 	}
 
