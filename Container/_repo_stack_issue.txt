@@ -1,24 +1,30 @@
 
 _______________reop_stack_issue_______________
 
+MARKING:
+	+ --- fixed
+	- --- not fixed
+	= --- in process
+
 2020-02-27:
-	1、container 的目录结构有问题。
+	=1、container 的目录结构有问题。
 
 2020-02-28:
-	1、提供查询存储元素占用的的内存大小？
-	2、list 需要完善，功能仍未完成。 
+	-1、提供查询存储元素占用的的内存大小？
+	-2、list 需要完善，功能仍未完成。 
 
 2020-02-29：
-	1、存入 stack 数值型数据时，也用指针，是否需要特化？
-	2、错误处理，添加返回错误代码机制。
+	-1、存入 stack 数值型数据时，也用指针，是否需要特化？
+	=2、错误处理，添加返回错误代码机制。
 
 2020-03-02:
-	1、struct queue_t 需要更改为 struct queue_s。
-	2、修改 typedef * _TYPEDEF 更改为 typedef * _t。
+	+1、struct queue_t 需要更改为 struct queue_s。
+	+2、修改 typedef * _TYPEDEF 更改为 typedef * _t。
 
 2020-03-13:
-	1、red black tree 节点的 data.content 需特化，排除红黑树节点标识。
-	2、疑惑 reb black tree 存储指针深度是否太深；
+	-1、red black tree 节点的 data.content 需特化，排除红黑树节点标识。
+	-2、疑惑 reb black tree 存储指针深度是否太深；
 
 2020-3-15:
-	1、防御无限制插入。
+	-1、防御无限制插入。
+	=2、所有取出或查询之前应先检查是否空。

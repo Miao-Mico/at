@@ -51,7 +51,9 @@ typedef struct at_message_queue_s
 
 struct at_message_pool_control_s {
 	struct {
-		errno_t(*init)(struct at_message_pool_s **message);
+		errno_t(*init)(struct at_message_pool_s **message_pool,
+					   struct at_data_structure_control_package_s *transmit_control,
+					   struct at_data_structure_control_package_s *feedback_control);
 
 		errno_t(*destroy)(struct at_message_pool_s **message);
 	}configuration;
@@ -157,7 +159,9 @@ struct at_message_queue_message_package_s {
  * @return void
  */
 
-errno_t at_message_pool_control_configuration_init(struct at_message_pool_s **message);
+errno_t at_message_pool_control_configuration_init(struct at_message_pool_s **message_pool,
+												   struct at_data_structure_control_package_s *transmit_control,
+												   struct at_data_structure_control_package_s *feedback_control);
 
 /**
  * @brief This function will destroy the at message pool.

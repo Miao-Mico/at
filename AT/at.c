@@ -195,7 +195,9 @@ errno_t at_control_configuration_init(struct at_s **at,
 	}
 
 	if (at_message_pool_ctrl.configuration
-		.init(&(*at)->message_pool_ptr)) {													/* Initialize the at message pool */
+		.init(&(*at)->message_pool_ptr,														/* Initialize the at message pool */
+			  NULL,
+			  NULL)) {	
 		return 2;
 	}
 

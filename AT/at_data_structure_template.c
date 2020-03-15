@@ -75,6 +75,16 @@ errno_t at_list_stack_control_package_configration_destroy(void *data_structure)
 at_size_t at_list_stack_control_package_capacity_size(void *data_structure);
 
 /**
+ * @brief This function will get if the data structure is empty.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+bool at_list_stack_control_package_capacity_empty(void *data_structure);
+
+/**
  * @brief This function will access the at element of the stack.
  *
  * @param void
@@ -142,6 +152,16 @@ errno_t at_list_queue_control_package_configration_destroy(void *data_structure)
  */
 
 at_size_t at_list_queue_control_package_capacity_size(void *data_structure);
+
+/**
+ * @brief This function will get if the data structure is empty.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+bool at_list_queue_control_package_capacity_empty(void *data_structure);
 
 /**
  * @brief This function will access the at element of the stack.
@@ -213,6 +233,16 @@ errno_t at_list_priority_queue_control_package_configration_destroy(void *data_s
 at_size_t at_list_priority_queue_control_package_capacity_size(void *data_structure);
 
 /**
+ * @brief This function will get if the data structure is empty.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+bool at_list_priority_queue_control_package_capacity_empty(void *data_structure);
+
+/**
  * @brief This function will access the at element of the stack.
  *
  * @param void
@@ -282,6 +312,16 @@ errno_t at_red_black_tree_control_package_configration_destroy(void **data_struc
 at_size_t at_red_black_tree_control_package_capacity_size(void *data_structure);
 
 /**
+ * @brief This function will get if the data structure is empty.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+bool at_red_black_tree_control_package_capacity_empty(void *data_structure);
+
+/**
  * @brief This function will access the at element of the stack.
  *
  * @param void
@@ -292,13 +332,13 @@ at_size_t at_red_black_tree_control_package_capacity_size(void *data_structure);
 void *at_red_black_tree_control_package_lookup_find(void *data_structure,
 													at_size_t position);
 
-	 /**
-	  * @brief This function will push the data as the at one of the stack.
-	  *
-	  * @param void
-	  *
-	  * @return void
-	  */
+/**
+ * @brief This function will push the data as the at one of the stack.
+ *
+ * @param void
+ *
+ * @return void
+ */
 
 errno_t at_red_black_tree_control_package_modifiers_insert(void *data_structure,
 														   void *data,
@@ -335,6 +375,7 @@ struct at_data_structure_control_package_s at_list_stack_control_package = {
 	.configuration.destroy = at_list_stack_control_package_configration_destroy,
 
 	.capacity.size = at_list_stack_control_package_capacity_size,
+    .capacity.empty = at_list_stack_control_package_capacity_empty,
 
 	.element_access.at = (at_import_func_t)at_list_stack_control_package_element_access_at,
 
@@ -355,6 +396,7 @@ struct at_data_structure_control_package_s at_list_queue_control_package = {
 	.configuration.destroy = at_list_queue_control_package_configration_destroy,
 
 	.capacity.size = at_list_queue_control_package_capacity_size,
+	.capacity.empty = at_list_queue_control_package_capacity_empty,
 
 	.element_access.at = (at_import_func_t)at_list_queue_control_package_element_access_at,
 
@@ -375,6 +417,7 @@ struct at_data_structure_control_package_s at_list_priority_queue_control_packag
 	.configuration.destroy = at_list_priority_queue_control_package_configration_destroy,
 
 	.capacity.size = at_list_priority_queue_control_package_capacity_size,
+	.capacity.empty = at_list_priority_queue_control_package_capacity_empty,
 
 	.element_access.at = (at_import_func_t)at_list_priority_queue_control_package_element_access_at,
 
@@ -395,6 +438,7 @@ struct at_data_structure_control_package_s at_red_black_tree_control_package = {
 	.configuration.destroy = at_red_black_tree_control_package_configration_destroy,
 
 	.capacity.size = at_red_black_tree_control_package_capacity_size,
+	.capacity.empty = at_red_black_tree_control_package_capacity_empty,
 
 	.lookup.search = at_red_black_tree_control_package_lookup_find,
 
@@ -468,6 +512,22 @@ at_list_stack_control_package_capacity_size(void *data_structure)
 	#endif // (AT_TASK_DATA_STRUCTURE_CFG_DEBUG_EN)
 
 	return (at_size_t)stack_ctrl.capacity.size((stack_stp)data_structure);
+}
+
+/**
+ * @brief This function will get if the data structure is empty.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+static inline bool
+at_list_stack_control_package_capacity_empty(void *data_structure)
+{
+	assert(data_structure);
+
+	return (at_size_t)stack_ctrl.capacity.empty((stack_stp)data_structure);
 }
 
 /**
@@ -609,6 +669,24 @@ at_list_queue_control_package_capacity_size(void *data_structure)
 	#endif // (AT_TASK_DATA_STRUCTURE_CFG_DEBUG_EN)
 
 	return (at_size_t)queue_ctrl.capacity.size((queue_stp)data_structure);
+}
+
+/**
+ * @brief This function will get if the data structure is empty.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+static inline bool
+at_list_queue_control_package_capacity_empty(void *data_structure)
+{
+	assert(data_structure);
+
+	//return (at_size_t)queue_ctrl.capacity.empty((queue_stp)data_structure);
+
+	return 0;
 }
 
 /**
@@ -754,6 +832,22 @@ at_list_priority_queue_control_package_capacity_size(void *data_structure)
 }
 
 /**
+ * @brief This function will get if the data structure is empty.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+static inline bool
+at_list_priority_queue_control_package_capacity_empty(void *data_structure)
+{
+    assert(data_structure);
+
+    return (at_size_t)priority_queue_ctrl.capacity.empty((priority_queue_stp)data_structure);
+}
+
+/**
  * @brief This function will access the at element of the stack.
  *
  * @param void
@@ -872,7 +966,7 @@ at_red_black_tree_control_package_configration_destroy(void **data_structure)
 }
 
 /**
- * @brief This function will push the data as the at one of the stack.
+ * @brief This function will get the size of the data structure.
  *
  * @param void
  *
@@ -881,6 +975,22 @@ at_red_black_tree_control_package_configration_destroy(void **data_structure)
 
 static inline at_size_t
 at_red_black_tree_control_package_capacity_size(void *data_structure)
+{
+	assert(data_structure);
+
+	return 0;
+}
+
+/**
+ * @brief This function will get if the data structure is empty.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+static inline bool
+at_red_black_tree_control_package_capacity_empty(void *data_structure)
 {
 	assert(data_structure);
 

@@ -151,6 +151,8 @@ struct at_data_structure_control_package_s {
 
 	struct {
 		at_size_t(*size)(void *data_structure);
+
+		bool (*empty)(void *data_structure);
 	}capacity;
 
 	union {

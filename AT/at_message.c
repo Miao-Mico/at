@@ -29,9 +29,9 @@
  */
 
 struct at_message_pool_s {
-	void *transmit_queue;
+	struct at_data_structure_package_s transmit;
 
-	void *feedback_stack;
+	struct at_data_structure_package_s feedback;
 };
 
 /**
@@ -62,20 +62,6 @@ struct at_message_queue_s {
 *                                       LOCAL GLOBAL VARIABLES
 *********************************************************************************************************
 */
-
-/**
- * @brief This struct will contain all the at task list stack control functions.
- */
-
-struct at_data_structure_control_package_s *at_message_transmit_list_queue_package =
-	&AT_MESSAGE_CFG_USER_DEFINED_TRANSMIT_MESSAGE_POOL_DATA_STRUCTURE;
-
-/**
- * @brief This struct will contain all the at task list stack control functions.
- */
-
-struct at_data_structure_control_package_s *at_message_feedback_list_stack_package =
-	&AT_MESSAGE_CFG_USER_DEFINED_FEEDBACK_MESSAGE_POOL_DATA_STRUCTURE;
 
 /**
  * @brief This struct is the body of at message control struct.
@@ -143,23 +129,45 @@ errno_t at_message_queue_control_exchange(struct at_message_queue_s *message_que
  * @return void
  */
 
-errno_t at_message_pool_control_configuration_init(struct at_message_pool_s **message)
+errno_t at_message_pool_control_configuration_init(struct at_message_pool_s **message_pool,
+												   struct at_data_structure_control_package_s *transmit_control,
+												   struct at_data_structure_control_package_s *feedback_control)
 {
-	assert(message);
+	assert(message_pool);
 
-	if (NULL == ((*message) = calloc(1, sizeof(struct at_message_pool_s)))) {
+	#ifdef __AT_DATA_STRUCTURE_TEMPLATE_H													/* If contain the file */
+
+	if (NULL == transmit_control) {
+		transmit_control = &at_list_queue_control_package;
+	}
+
+	if (NULL == feedback_control) {
+		feedback_control = &at_list_stack_control_package;
+	}
+
+	#else
+
+	assert(transmit_control);
+	assert(feedback_control);
+
+	#endif // __AT_DATA_STRUCTURE_TEMPLATE_H
+
+	if (NULL == ((*message_pool) = calloc(1, sizeof(struct at_message_pool_s)))) {			/* Allocate the message pool body */
 		return -1;
 	}
 
-	if (at_message_transmit_list_queue_package->configuration.
-		init(&(*message)->transmit_queue)) {
+	if (transmit_control->configuration
+		.init(&(*message_pool)->transmit.data_structure_ptr)) {								/* Initialize the transmit part of the message pool */
 		return 1;
 	}
 
-	if (at_message_feedback_list_stack_package->configuration.
-		init(&(*message)->feedback_stack)) {
+	if (feedback_control->configuration
+		.init(&(*message_pool)->feedback.data_structure_ptr)) {								/* Initialize the feedback part of the message pool */
 		return 2;
 	}
+
+	(*message_pool)->transmit.control_ptr = transmit_control;
+	(*message_pool)->feedback.control_ptr = feedback_control;
 
 	return 0;
 }
@@ -172,18 +180,18 @@ errno_t at_message_pool_control_configuration_init(struct at_message_pool_s **me
  * @return void
  */
 
-errno_t at_message_pool_control_configuration_destroy(struct at_message_pool_s **message)
+errno_t at_message_pool_control_configuration_destroy(struct at_message_pool_s **message_pool)
 {
-	assert(message);
-	assert(*message);
+	assert(message_pool);
+	assert(*message_pool);
 
-	if (at_message_transmit_list_queue_package->configuration.
-		destroy(&(*message)->transmit_queue)) {
+	if ((*message_pool)->transmit.control_ptr->configuration
+		.destroy(&(*message_pool)->transmit.data_structure_ptr)) {
 		return 1;
 	}
 
-	if (at_message_feedback_list_stack_package->configuration.
-		destroy(&(*message)->feedback_stack)) {
+	if ((*message_pool)->feedback.control_ptr->configuration
+		.destroy(&(*message_pool)->feedback.data_structure_ptr)) {
 		return 2;
 	}
 
@@ -198,7 +206,7 @@ errno_t at_message_pool_control_configuration_destroy(struct at_message_pool_s *
  * @return void
  */
 
-errno_t at_message_pool_control_transmit_deposit(struct at_message_pool_s *message,
+errno_t at_message_pool_control_transmit_deposit(struct at_message_pool_s *message_pool,
 												 at_size_t count,
 												 struct at_message_transmit_unit_s *unit,
 												 ...)
@@ -215,10 +223,9 @@ errno_t at_message_pool_control_transmit_deposit(struct at_message_pool_s *messa
 
 	va_list va_ptr;
 
-	at_size_t cnt = 0;
-
 	va_start(va_ptr, unit);
 
+	at_size_t cnt = 0;
 	do {
 		if (NULL == memcpy(&msg_grp->units[cnt++], 											/* Copy the string list and the length list */
 						   unit,
@@ -230,8 +237,8 @@ errno_t at_message_pool_control_transmit_deposit(struct at_message_pool_s *messa
 
 	va_end(va_ptr);
 
-	if (at_message_transmit_list_queue_package->modifiers.
-		insert(message->transmit_queue, msg_grp)) {											/* Push the str group into the queue */
+	if (message_pool->transmit.control_ptr->modifiers
+		.insert(message_pool->transmit.data_structure_ptr, msg_grp)) {						/* Insert the address of the message group into the queue */
 		return 3;
 	}
 
@@ -246,21 +253,23 @@ errno_t at_message_pool_control_transmit_deposit(struct at_message_pool_s *messa
  * @return void
  */
 
-struct at_message_transmit_group_s at_message_pool_control_transmit_load(struct at_message_pool_s *message)
+struct at_message_transmit_group_s
+	at_message_pool_control_transmit_load(struct at_message_pool_s *message_pool)
 {
 	struct at_message_transmit_group_s
 		msg_grp = { 0 },
 		*msg_grp_ptr = NULL;
 
-	if (NULL == (msg_grp_ptr = at_message_transmit_list_queue_package->element_access
-				 .at(message->transmit_queue))) {
+	if (NULL == (msg_grp_ptr
+				 = message_pool->transmit.control_ptr->element_access
+				 .at(message_pool->transmit.data_structure_ptr))) {							/* Access the message from the message pool */
 		return (struct at_message_transmit_group_s) { 0 };
 	}
 
 	msg_grp = *msg_grp_ptr;
 
-	if (at_message_transmit_list_queue_package->modifiers.
-		delete(message->transmit_queue)) {
+	if (message_pool->transmit.control_ptr->modifiers
+		.delete(message_pool->transmit.data_structure_ptr)) {								/* Delete the message from the message pool */
 		return (struct at_message_transmit_group_s) { 0 };
 	}
 
@@ -275,7 +284,7 @@ struct at_message_transmit_group_s at_message_pool_control_transmit_load(struct 
  * @return void
  */
 
-errno_t at_message_pool_control_feedback_deposit(struct at_message_pool_s *message,
+errno_t at_message_pool_control_feedback_deposit(struct at_message_pool_s *message_pool,
 												 void *str, at_size_t len)
 {
 	void *msg_cpy = NULL;
@@ -284,12 +293,13 @@ errno_t at_message_pool_control_feedback_deposit(struct at_message_pool_s *messa
 		return -1;
 	}
 
-	if (!memcpy(msg_cpy, str, len)) {
+	if (!memcpy(msg_cpy, str, len)) {														/* Copy the message */
 		return 1;
 	}
 
-	if (at_message_feedback_list_stack_package->modifiers.
-		insert(message->feedback_stack, msg_cpy)) {
+	if (message_pool->feedback.control_ptr->modifiers
+		.insert(message_pool->feedback.data_structure_ptr, msg_cpy)) {						/* Insert the address of message into the message pool,
+																								it will have no limit on the length of the message */
 		return 2;
 	}
 
@@ -304,17 +314,18 @@ errno_t at_message_pool_control_feedback_deposit(struct at_message_pool_s *messa
  * @return void
  */
 
-void *at_message_pool_control_feedback_load(struct at_message_pool_s *message)
+void *at_message_pool_control_feedback_load(struct at_message_pool_s *message_pool)
 {
 	void *str = NULL;
 
-	if (NULL == (str = at_message_feedback_list_stack_package->element_access
-				 .at(message->feedback_stack))) {
+	if (NULL == (str
+				 = message_pool->feedback.control_ptr->element_access
+				 .at(message_pool->feedback.data_structure_ptr))) {							/* Access the message from the message pool */
 		return NULL;
 	}
 
-	if (at_message_feedback_list_stack_package->modifiers.
-		delete(message->feedback_stack)) {
+	if (message_pool->feedback.control_ptr->modifiers
+		.delete(message_pool->feedback.data_structure_ptr)) {								/* Delete the message from the message pool */
 		return NULL;
 	}
 
@@ -353,17 +364,18 @@ errno_t at_message_queue_control_configuration_init(struct at_message_queue_s **
 
 	#endif // __AT_DATA_STRUCTURE_TEMPLATE_H
 
-	if (NULL == ((*message_queue) = calloc(1, sizeof(struct at_message_queue_s)))) {
+	if (NULL == ((*message_queue) 
+				 = calloc(1, sizeof(struct at_message_queue_s)))) {							/* Allocate the message queue */
 		return -1;
 	}
 
 	if (manager_control->configuration
-		.init(&(*message_queue)->queue_manager_package.data_structure_ptr)) {
+		.init(&(*message_queue)->queue_manager_package.data_structure_ptr)) {				/* Initialize the queue manager part of the message queue */
 		return 1;
 	}
 
 	if (NULL == exchange) {
-		exchange = at_message_queue_control_exchange;
+		exchange = at_message_queue_control_exchange;										/* Default the exchange function of the message queue */
 	}
 
 	(*message_queue)->exchange_ptr = exchange;
@@ -372,15 +384,15 @@ errno_t at_message_queue_control_configuration_init(struct at_message_queue_s **
 	(*message_queue)->exchange_ptr = exchange;
 
 	return 0;
-}
+	}
 
-/**
- * @brief This function will publish a message into the message queue pool.
- *
- * @param void
- *
- * @return void
- */
+	/**
+	 * @brief This function will publish a message into the message queue pool.
+	 *
+	 * @param void
+	 *
+	 * @return void
+	 */
 
 errno_t at_message_queue_control_configuration_destroy(struct at_message_queue_s **message_queue)
 {
@@ -558,7 +570,8 @@ struct at_message_queue_message_package_s
 		return (struct at_message_queue_message_package_s) { NULL };
 	}
 
-	if (NULL == memcpy(&message_package, message_package_ptr, sizeof(struct at_message_queue_message_package_s))) {
+	if (NULL == memcpy(&message_package, message_package_ptr,
+					   sizeof(struct at_message_queue_message_package_s))) {
 		return (struct at_message_queue_message_package_s) { NULL };
 	}
 
