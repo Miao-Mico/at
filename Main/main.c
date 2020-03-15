@@ -23,8 +23,10 @@
 #define MAIN_CFG_CLOCKER_FREQUENCY															\
 	1000000
 
-void main_platform_support_package_init(void);
 size_t __stdcall main_hardware_layer(PVOID arg);
+size_t __stdcall main_exit_control(PVOID arg);
+
+void main_platform_support_package_init(void);
 void main_software_layer(void);
 
 size_t get_rand_delay_time(void);
@@ -39,64 +41,36 @@ struct clocker_s *clocker = NULL;
 struct at_device_package_s *at_windows_controller_package;
 struct at_device_package_s *at_windows_peripheral_package;
 
+size_t thread_id_exit_control = 0;
+HANDLE thread_handle_exit_control = 0;
+
 size_t thread_id_hardware_layer = 0;
 HANDLE thread_handle_hardware_layer = 0;
 
+bool main_thred_exit = false;
+
 void main(void)
 {
-	FILE* controller = calloc(1,sizeof(FILE));
-	errno_t err = 0;
-
-	err = fopen_s(&controller, "./Text/test.txt", "a+");
-
-	if (NULL == controller) {
-		return;
-	}
-
-	char data[] = "aaaaaaa";
-
-	err = fwrite(&data, sizeof(char), sizeof(data), controller);
-
-	return;
-
 	main_platform_support_package_init();
 
-	if (0 == at_windows_controller_package->transmit.send(at_windows_controller_package->device_ptr,
-													 "test", sizeof("test"))) {
-		return;
-	}
-
-	printf("controller receive:\"%s\"", 
-		   (char*)at_windows_controller_package->transmit.receive(at_windows_controller_package->device_ptr, 100));
-
-	if (0 == at_windows_peripheral_package->transmit.send(at_windows_peripheral_package->device_ptr,
-														  "test", sizeof("test"))) {
-		return;
-	}
-
-	printf("controller receive:\"%s\"",
-		(char *)at_windows_peripheral_package->transmit.receive(at_windows_peripheral_package->device_ptr, 100));
+	WaitForSingleObject(thread_id_exit_control, INFINITE);									/* Wait the exit control run at least once */
+	WaitForSingleObject(thread_handle_hardware_layer, INFINITE);							/* Wait the hardware layer run at least once */
 
 	clocker_ctrl.start(clocker);
-
-	printf("have cost: %lldus \r\n", clocker_ctrl.stop(clocker));
-
-	WaitForSingleObject(thread_handle_hardware_layer, INFINITE);							/* Wait the hardware layer run at least once */
 
 	at_ctrl.transmit.multi_level.generate(at, "#3:1:2:1@1",									/* Generate the multi level at instruction */
 										  "level 1.\r\n",
 										  "level 2.", "\r\n",
 										  "level 3.\r\n", "FILE:__PERIPHERAL_DEVICE_SEND_TXT");
-
+	
 	at_ctrl.transmit.multi_level.send(at);													/* Send the multi level at instruction */
 
+	printf("have cost: %lldus \r\n", clocker_ctrl.stop(clocker));
+
 	while (true) {
-		static char scanf_string[100] = { 0 };
-
 		main_software_layer();
-		scanf_string[99] = scanf("%s", scanf_string);
 
-		if ('0' != scanf_string[0]) {
+		if (main_thred_exit) {
 			break;
 		}
 	}
@@ -122,10 +96,6 @@ void main_platform_support_package_init(void)												/* Platform Support Pac
 											 MAIN_CFG_CLOCKER_FREQUENCY,
 											 &time_mamage_windows_timer_package);
 
-	thread_handle_hardware_layer =
-		(HANDLE)_beginthreadex(NULL, 0, main_hardware_layer, 								/* Begin the hardware layer simulation thread */
-							   NULL, 0, &thread_id_hardware_layer);
-
 	error += at_device_package_packer.
 		windows_file_stream(&at_windows_controller_package,
 							controller_file_name);											/* Pack the package as the windows file stream */
@@ -133,8 +103,27 @@ void main_platform_support_package_init(void)												/* Platform Support Pac
 	error += at_ctrl.configuration.init(&at, 												/* Initialize the at */
 										at_windows_controller_package);
 
+	thread_handle_exit_control =
+		(HANDLE)_beginthreadex(NULL, 0, main_exit_control, 									/* Begin the exit control thread */
+							   NULL, 0, &thread_id_exit_control);
+
+	thread_handle_hardware_layer =
+		(HANDLE)_beginthreadex(NULL, 0, main_hardware_layer, 								/* Begin the hardware layer simulation thread */
+							   NULL, 0, &thread_id_hardware_layer);
+
 	if (error) {
 		while (true);
+	}
+}
+
+size_t __stdcall main_exit_control(PVOID arg)												/* Control if the main thread exit the wile loop */
+{
+	static char scanf_string[100] = { 0 };
+
+	scanf_string[99] = scanf("%s", scanf_string);
+
+	if ('0' != scanf_string[0]) {															/* If have input,set main_thred_exit */
+		main_thred_exit = true;
 	}
 }
 

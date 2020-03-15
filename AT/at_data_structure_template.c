@@ -927,9 +927,6 @@ at_red_black_tree_control_package_modifiers_insert(void *data_structure,
 {
 	assert(data_structure);
 
-	printf("red black tree %p .insert:%p\r\n",
-		   data_structure, data);
-
 	struct specific_data_template_s {
 		size_t id;
 

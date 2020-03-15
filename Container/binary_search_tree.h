@@ -31,7 +31,7 @@
 #define BINARY_SEARCH_TREE_CFG_INTEGRATED_STRUCTURE_MODE_EN					1u
 
 /* Configure    if enable debug mode.																	*/
-#define BINARY_SEARCH_TREE_CFG_DEBUG_EN											1u
+#define BINARY_SEARCH_TREE_CFG_DEBUG_EN											0u
 
 /*
 *********************************************************************************************************
