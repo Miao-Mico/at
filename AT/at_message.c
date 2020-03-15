@@ -548,7 +548,7 @@ struct at_message_queue_message_package_s
 		message_package = { 0 };
 
 	if (NULL == (queue = message_queue->queue_manager_package.control_ptr->lookup
-				 .search(message_queue->queue_manager_package.data_structure_ptr,
+				 .search(message_queue->queue_manager_package.data_structure_ptr,			/* Search and get the queue the subscriber have */
 						 who_am_i))) {
 		return (struct at_message_queue_message_package_s) { NULL };
 	}

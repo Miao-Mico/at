@@ -45,6 +45,8 @@ struct at_task_os_s {
 
 	struct at_message_queue_unit_s mq_unit;
 
+	struct at_message_queue_unit_s mq_unit_outward;
+
 	at_task_size_t priority_max;
 
 	at_task_size_t priority;
@@ -86,8 +88,6 @@ struct at_task_info_s {
 	char *name;
 
 	at_task_size_t priority;
-
-	struct at_message_queue_unit_s mq_unit;
 };
 
 /**
@@ -96,6 +96,10 @@ struct at_task_info_s {
 
 struct at_task_s {
 	struct at_task_info_s info;
+
+	struct at_message_queue_unit_s mq_unit;
+
+	struct at_message_queue_unit_s mq_unit_outward;
 
 	at_task_function_t function;
 
@@ -140,6 +144,10 @@ struct at_task_control_s at_task_ctrl = {
 	.task.configuration.destroy = at_task_control_task_configuration_destroy,
 	.task.configuration.suspend = at_task_control_task_configuration_suspend,
 	.task.configuration.rusume = at_task_control_task_configuration_resume,
+	.task.message_queue.task_os.join = at_task_control_task_message_queue_task_os_join,
+	.task.message_queue.task_os.quit = at_task_control_task_message_queue_task_os_quit,
+	.task.message_queue.outward.join = at_task_control_task_message_queue_outward_join,
+	.task.message_queue.outward.quit = at_task_control_task_message_queue_outward_quit,
 };
 
 /*
@@ -157,6 +165,30 @@ struct at_task_control_s at_task_ctrl = {
  */
 
 void at_task_os_control_idle_task_function(void *arg);
+
+/**
+ * @brief This function will join the message queue.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t
+at_task_control_task_message_queue_join_core(at_message_queue_stp mseeage_queue,
+											 struct at_message_queue_unit_s *message_queue_unit);
+
+/**
+ * @brief This function will quit the message queue.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t
+at_task_control_task_message_queue_quit_core(at_message_queue_stp mseeage_queue,
+											 struct at_message_queue_unit_s *message_queue_unit);
 
 /*
 *********************************************************************************************************
@@ -176,6 +208,7 @@ errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os,
 											  struct at_message_queue_s *message_queue)
 {
 	assert(task_os);
+	assert(message_queue);
 
 	errno_t err = 0;
 
@@ -183,9 +216,14 @@ errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os,
 		return -1;
 	}
 
-	if (NULL == ((*task_os)->mq_unit.mq_ptr = message_queue) &&		/* Initialize the message queue */
-		at_message_queue_ctrl.configuration
-		.init(&(*task_os)->mq_unit.mq_ptr,
+	if (0u == ((*task_os)->mq_unit_outward.id
+			   = at_message_queue_ctrl.membership
+			   .join(((*task_os)->mq_unit_outward.mq_ptr = message_queue)))) {				/* Join the message queue with outside */
+		return 4;
+	}
+
+	if (at_message_queue_ctrl.configuration
+		.init(&(*task_os)->mq_unit.mq_ptr,													/* Initialize the message queue of the at task os */
 			  NULL, NULL, NULL)) {
 		return 4;
 	}
@@ -209,7 +247,6 @@ errno_t at_task_control_os_configuration_init(struct at_task_os_s **task_os,
 												"at task os.idle task",
 												at_task_os_control_idle_task_function,
 												AT_TASK_CFG_IDLE_TASK_PRIORITY,
-												true,
 												NULL,
 												0)) {
 		return 3;
@@ -392,18 +429,26 @@ void at_task_control_os_core(struct at_task_os_s *task_os, void *arg_list)
 	at_task_control_os_scheduler(task_os);
 
 	if (NULL != task_os->running_task_ptr) {												/* Valid task */
-		static char *msg = NULL;
-		static bool msg_load = false;
 		static bool highest_priority = false;
 
-		if (false == msg_load &&
-			NULL == (msg = at_message_pool_ctrl.feedback.load(arg_list))) {					/* Load the feedback message when at the priority max */
-			return;
-		}
+		if (false == highest_priority
+			&& task_os->priority_max == task_os->running_task_ptr->info.priority) {			/* First run should be the highest priority task */
+			static char *message = NULL;
 
-		msg_load = true;
+			if (NULL == (message
+						 = at_message_pool_ctrl.feedback
+						 .load(arg_list))) {												/* Load the feedback message when at the priority max */
+				return;
+			}
 
-		if (task_os->priority_max == task_os->running_task_ptr->info.priority) {			/* First run should be the highest priority task */
+			if (at_message_queue_ctrl.communication
+				.publish(task_os->mq_unit.mq_ptr,											/* publish the feedback message to message queue */
+						 message,
+						 2, 																/* todo:set a post cast code */
+						 task_os->mq_unit.id)) {
+				return;
+			}
+
 			highest_priority = true;
 		}
 
@@ -413,7 +458,9 @@ void at_task_control_os_core(struct at_task_os_s *task_os, void *arg_list)
 
 		struct at_task_function_arguement_list_package_s
 			arg_list_package = {
-			.mq_unit_ptr = &task_os->running_task_ptr->info.mq_unit,
+			.task_os = task_os,
+			.task = task_os->running_task_ptr,
+			.mq_unit = &task_os->running_task_ptr->mq_unit
 		};
 
 		task_os->running_task_ptr->function(&arg_list_package);								/* Run the function of the task */
@@ -421,7 +468,6 @@ void at_task_control_os_core(struct at_task_os_s *task_os, void *arg_list)
 		if ((at_task_size_t)AT_TASK_CFG_PRIORITY_MAX - 1 ==									/* When the idle task */
 			task_os->running_task_ptr->info.priority) {
 			highest_priority = false;
-			msg_load = false;
 		}
 	}
 }
@@ -439,7 +485,6 @@ errno_t at_task_control_task_configuration_init(struct at_task_os_s *task_os,
 												char *name,
 												void *func,
 												at_task_size_t priority,
-												bool join_message_queue,
 												void *hook,
 												enum at_task_option_e opt)
 {
@@ -456,27 +501,27 @@ errno_t at_task_control_task_configuration_init(struct at_task_os_s *task_os,
 		case AT_TASK_OPTION_RUN:
 			(*task)->info.status = AT_TASK_STATUS_READY;									/* Set the ready status of the task */
 
-			at_task_os_task_list_package->modifiers
-				.insert(task_os->task_list[priority].ready, *task);							/* Push the task address into the ready list of this priority */
+			if (at_task_os_task_list_package->modifiers
+				.insert(task_os->task_list[priority].ready, *task)) {						/* Push the task address into the ready list of this priority */
+				return 2;
+			}
 			break;
 		case AT_TASK_OPTION_SUSPEND:
 			(*task)->info.status = AT_TASK_STATUS_SUSPEND;									/* Set the ready status of the task */
 
-			at_task_os_task_list_package->modifiers
-				.insert(task_os->task_list[priority].suspend, *task);						/* Push the task address into the suspend list of this priority */
+			if (at_task_os_task_list_package->modifiers
+				.insert(task_os->task_list[priority].suspend, *task)) {						/* Push the task address into the suspend list of this priority */
+				return 3;
+			}
 			break;
 		default:
 			break;
 	}
 
-	if (join_message_queue &&
-		!((*task)->info.mq_unit.id
-		  = at_message_queue_ctrl.membership
-		  .join(task_os->mq_unit.mq_ptr))) {												/* Join the message queue */
-		return 1;
+	if (NULL == at_task_control_task_message_queue_task_os_join(task_os,
+																*task)) {					/* Join the message queue */
+		return 4;
 	}
-
-	(*task)->info.mq_unit.mq_ptr = task_os->mq_unit.mq_ptr;
 
 	if (task_os->priority_max > priority) {													/* Record the highest priority of the task os */
 		task_os->priority_max = priority;
@@ -537,15 +582,21 @@ at_task_control_task_configuration_suspend(struct at_task_os_s *task_os,
 
 	void *task_addr = NULL;
 
-	if (NULL == (task_addr = at_task_os_task_list_package->element_access
-				 .at(task_os->task_list[task->info.priority].ready))) {
+	if (NULL == (task_addr 
+				 = at_task_os_task_list_package->element_access
+				 .at(task_os->task_list[task->info.priority].ready))) {						/* Access the pointer task from the ready list */
 		return 1;
 	}
 
-	at_task_os_task_list_package->modifiers
-		.insert(task_os->task_list[task->info.priority].suspend, task_addr);
-	at_task_os_task_list_package->modifiers
-		.delete(task_os->task_list[task->info.priority].ready);
+	if (at_task_os_task_list_package->modifiers
+		.insert(task_os->task_list[task->info.priority].suspend, task_addr)) {				/* Insert the task pointer into the suspend list */
+		return 3;
+	}
+
+	if (at_task_os_task_list_package->modifiers
+		.delete(task_os->task_list[task->info.priority].ready)) {							/* Delete the task pointer from the ready list */
+		return 4;
+	}
 
 	return 0;
 }
@@ -573,17 +624,105 @@ at_task_control_task_configuration_resume(struct at_task_os_s *task_os,
 
 	void *task_addr = NULL;
 
-	if (NULL == (task_addr = at_task_os_task_list_package->element_access
-				 .at(task_os->task_list[task->info.priority].suspend))) {
+	if (NULL == (task_addr
+				 = at_task_os_task_list_package->element_access
+				 .at(task_os->task_list[task->info.priority].suspend))) {					/* Access the pointer task from the suspend list */
 		return 2;
 	}
 
-	at_task_os_task_list_package->modifiers
-		.insert(task_os->task_list[task->info.priority].ready, task_addr);
-	at_task_os_task_list_package->modifiers
-		.delete(task_os->task_list[task->info.priority].suspend);
+	if (at_task_os_task_list_package->modifiers
+		.insert(task_os->task_list[task->info.priority].ready, task_addr)) {				/* Insert the task pointer into the ready list */
+		return 3;
+	}
+
+	if (at_task_os_task_list_package->modifiers
+		.delete(task_os->task_list[task->info.priority].suspend)) {							/* Delete the task pointer from the suspend list */
+		return 4;
+	}
 
 	return 0;
+}
+
+/**
+ * @brief This function will join the message queue hosted by at task os.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+struct at_message_queue_unit_s
+	*at_task_control_task_message_queue_task_os_join(struct at_task_os_s *task_os,
+													 struct at_task_s *task)
+{
+	assert(task_os);
+	assert(task);
+
+	if (at_task_control_task_message_queue_join_core(task_os->mq_unit.mq_ptr,
+													 &task->mq_unit)) {
+		return NULL;
+	}
+
+	return &task->mq_unit;
+}
+
+/**
+ * @brief This function will quit the message queue hosted by at task os.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_task_control_task_message_queue_task_os_quit(struct at_task_os_s *task_os,
+														struct at_task_s *task)
+{
+	assert(task_os);
+	assert(task);
+
+	return at_task_control_task_message_queue_quit_core(task_os->mq_unit.mq_ptr,
+														&task->mq_unit);
+}
+
+/**
+ * @brief This function will join the message queue hosted by at task os.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+struct at_message_queue_unit_s
+	*at_task_control_task_message_queue_outward_join(struct at_task_os_s *task_os,
+													 struct at_task_s *task)
+{
+	assert(task_os);
+	assert(task);
+
+	if (at_task_control_task_message_queue_join_core(task_os->mq_unit_outward.mq_ptr,
+													 &task->mq_unit_outward)) {
+		return NULL;
+	}
+
+	return &task->mq_unit_outward;
+}
+
+/**
+ * @brief This function will quit the message queue hosted by at task os.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_task_control_task_message_queue_outward_quit(struct at_task_os_s *task_os,
+														struct at_task_s *task)
+{
+	assert(task_os);
+	assert(task);
+
+	return at_task_control_task_message_queue_quit_core(task_os->mq_unit_outward.mq_ptr,
+														&task->mq_unit_outward);
 }
 
 /**
@@ -596,5 +735,78 @@ at_task_control_task_configuration_resume(struct at_task_os_s *task_os,
 
 void at_task_os_control_idle_task_function(void *arg_list)
 {
-	printf("at task os.idle task.message:\"%s\" \r\n", (char *)NULL);
+	struct at_task_function_arguement_list_package_s
+		*arg_list_package = arg_list;
+
+	char *message = NULL;
+
+	printf("at task os.idle task.enter\r\n");
+
+	if (NULL == (message
+				 = at_message_queue_ctrl.communication
+				 .subscribe(arg_list_package->mq_unit->mq_ptr,								/* Subscribe the message from the mesasge queue */
+							arg_list_package->mq_unit->id).message)) {
+		return;
+	}
+
+	printf("at task os.idle task.message:\"%s\" \r\n", message);
+}
+
+/**
+ * @brief This function will join the message queue.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+extern inline errno_t
+at_task_control_task_message_queue_join_core(at_message_queue_stp mseeage_queue,
+											 struct at_message_queue_unit_s *message_queue_unit)
+{
+	assert(mseeage_queue);
+	assert(message_queue_unit);
+
+	if (0u != message_queue_unit->id) {
+		goto EXIT;
+	}
+
+	if (0u == (message_queue_unit->id
+			   = at_message_queue_ctrl.membership
+			   .join(mseeage_queue))) {														/* Join the message queue */
+		return 2;
+	}
+
+	message_queue_unit->mq_ptr = mseeage_queue;
+
+EXIT:
+
+	return 0;
+}
+
+/**
+ * @brief This function will quit the message queue.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+extern inline errno_t
+at_task_control_task_message_queue_quit_core(at_message_queue_stp mseeage_queue,
+											 struct at_message_queue_unit_s *message_queue_unit)
+{
+	assert(mseeage_queue);
+	assert(message_queue_unit);
+
+	if (0u != message_queue_unit->id
+		&& at_message_queue_ctrl.membership
+		.quit(mseeage_queue,																/* Quit the message queue */
+			  message_queue_unit->id)) {
+		return 1;
+	}
+
+	message_queue_unit->mq_ptr = NULL;
+
+	return 0;
 }

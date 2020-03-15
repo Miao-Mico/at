@@ -41,9 +41,11 @@ typedef void (*at_task_function_t)(void *arg_list);
  */
 
 struct at_task_function_arguement_list_package_s {
-	void *mq_unit_ptr;
+	struct at_task_os_s *task_os;
 
-	void *message;
+	struct at_message_queue_unit_s *mq_unit;
+
+	struct at_task_s *task;
 
 	void *err;
 };
@@ -53,7 +55,7 @@ struct at_task_function_arguement_list_package_s {
  */
 
 struct at_task_control_s {
-	struct {
+	struct at_task_os_control_s {
 		struct {
 			errno_t(*init)(struct at_task_os_s **task_os,
 						   struct at_message_queue_s *message_queue);
@@ -69,14 +71,13 @@ struct at_task_control_s {
 					 void *arg_list);
 	}os;
 
-	struct {
+	struct at_task_os_task_control_s {
 		struct {
 			errno_t(*init)(struct at_task_os_s *task_os,
 						   struct at_task_s **task,
 						   char *name,
 						   void *func,
 						   at_task_size_t priority,
-						   bool join_message_queue,
 						   void *hook,
 						   enum at_task_option_e opt);
 
@@ -89,6 +90,24 @@ struct at_task_control_s {
 			errno_t(*rusume)(struct at_task_os_s *task_os,
 							 struct at_task_s *task);
 		}configuration;
+
+		struct {
+			struct {
+				struct at_message_queue_unit_s *(*join)(struct at_task_os_s *task_os,
+														struct at_task_s *task);
+
+				errno_t(*quit)(struct at_task_os_s *task_os,
+							   struct at_task_s *task);
+			}task_os;
+
+			struct {
+				struct at_message_queue_unit_s *(*join)(struct at_task_os_s *task_os,
+														struct at_task_s *task);
+
+				errno_t(*quit)(struct at_task_os_s *task_os,
+							   struct at_task_s *task);
+			}outward;
+		}message_queue;
 	}task;
 };
 
@@ -153,7 +172,6 @@ errno_t at_task_control_task_configuration_init(struct at_task_os_s *task_os,
 												char *name,
 												void *func,
 												at_task_size_t priority,
-												bool join_message_queue,
 												void *hook,
 												enum at_task_option_e opt);
 
@@ -189,6 +207,54 @@ errno_t at_task_control_task_configuration_suspend(struct at_task_os_s *task_os,
 
 errno_t at_task_control_task_configuration_resume(struct at_task_os_s *task_os,
 												  struct at_task_s *task);
+
+/**
+ * @brief This function will join the message queue hosted by at task os.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+struct at_message_queue_unit_s
+*at_task_control_task_message_queue_task_os_join(struct at_task_os_s *task_os,
+												 struct at_task_s *task);
+
+/**
+ * @brief This function will quit the message queue hosted by at task os.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t
+at_task_control_task_message_queue_task_os_quit(struct at_task_os_s *task_os,
+												struct at_task_s *task);
+
+/**
+ * @brief This function will join the message queue hosted by other.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+struct at_message_queue_unit_s
+*at_task_control_task_message_queue_outward_join(struct at_task_os_s *task_os,
+												 struct at_task_s *task);
+
+/**
+ * @brief This function will quit the message queue hosted by other.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t
+at_task_control_task_message_queue_outward_quit(struct at_task_os_s *task_os,
+												struct at_task_s *task);
 
 /*
 *********************************************************************************************************

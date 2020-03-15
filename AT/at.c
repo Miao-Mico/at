@@ -225,7 +225,6 @@ errno_t at_control_configuration_init(struct at_s **at,
 			  "at task os.multi level transmit task",
 			  at_control_at_task_os_multi_level_transmit_task_function,
 			  0,																			/* Set Max priority */
-			  true,
 			  NULL,
 			  0)) {
 		return 6;
@@ -445,7 +444,7 @@ errno_t at_control_transmit_multi_level_send(struct at_s *at)
 	static struct at_message_transmit_group_s msg = { 0 };
 
 	if (0u == (msg = at_message_pool_ctrl.transmit
-				.load(at->message_pool_ptr))
+			   .load(at->message_pool_ptr))
 		.count) {
 		return 1;
 	}
@@ -546,6 +545,99 @@ NOT_FIT:
 }
 
 /**
+ * @brief This function will be called when the multi level transmit task run.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list)
+{
+	static struct at_multi_level_transmit_request_package_s
+		*request_package = NULL;
+
+	static at_size_t
+		count = 0xff;
+
+	struct at_task_function_arguement_list_package_s
+		*arg_list_package = arg_list;
+
+	struct at_message_queue_unit_s
+		*mq_unit_outward = NULL;
+
+	struct at_message_queue_message_package_s
+		message_package = { 0 };
+
+	char
+		*message = NULL;
+
+	printf("at task os.multi level transmit task.enter\r\n");
+
+	if (NULL != request_package
+		&& request_package->msg_grp->count > count) {
+		static errno_t err = 0;
+
+		printf("at task os.multi level transmit task.send:instruction is \"%s\" answer is \"%s\"\r\n",
+			   request_package->msg_grp->units[count].string.ist,
+			   request_package->msg_grp->units[count].string.asw);
+
+		if ('\0' != *request_package->msg_grp->units[count].string.asw) {
+			if (NULL == (message
+						 = at_message_queue_ctrl.communication
+						 .subscribe(arg_list_package->mq_unit->mq_ptr,						/* Subscribe the feedback message from the message queue host by task os */
+									arg_list_package->mq_unit->id).message)) {
+				return;
+			}
+
+			printf("at task os.multi level transmit task.message:\"%s\" \r\n", message);
+
+			if (false) {																	/* TODO:Verify the message string,if not match */
+				static at_size_t verify_count = 0;
+
+				if (AT_CFG_TRANSMIT_VERIFY_EXPIRE_COUNT_MAX <= verify_count) {				/* Allow MAX _TRANSMIT_VERIFY_OVERDUE_TIME_MAX times */
+					verify_count = 0;
+				} else {
+					//verify_count++;
+
+					goto EXIT;
+				}
+			} else {
+			}
+		}
+
+		if (0 == request_package->send(request_package->device_ptr,
+									   request_package->msg_grp->units[count].string.ist,
+									   request_package->msg_grp->units[count].length.ist)) {
+			err = 1;
+			goto EXIT;
+		}
+
+	EXIT:
+
+		count++;
+
+		return;
+	} else {
+		if (NULL == (mq_unit_outward
+					 = at_task_ctrl.task.message_queue.outward
+					 .join(arg_list_package->task_os,
+						   arg_list_package->task))) {
+			return;
+		}
+
+		if (NULL == (request_package = (message_package										/* Subscribe the message from outward message queue host by at */
+										= at_message_queue_ctrl.communication
+										.subscribe(mq_unit_outward->mq_ptr,
+												   mq_unit_outward->id)).message)) {
+			return;
+		}
+
+		count = 1;
+	}
+}
+
+/**
  * @brief This function will analysis the transmit format string.
  *
  * @param void
@@ -621,74 +713,6 @@ struct at_transmit_format_analysis_package_s
 EXIT:
 
 	return format_package;
-}
-
-/**
- * @brief This function will be called when the multi level transmit task run.
- *
- * @param void
- *
- * @return void
- */
-
-void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list)
-{
-	struct at_task_function_arguement_list_package_s *arg_list_package = arg_list;
-
-	struct at_message_queue_unit_s *mq_unit = arg_list_package->mq_unit_ptr;
-
-	static struct at_message_queue_message_package_s
-		message_package = { 0 };
-
-	static struct at_multi_level_transmit_request_package_s
-		*request_package = NULL;
-
-	static at_size_t count = 0xff;
-
-	printf("at task os.multi level transmit task.enter\r\n");
-
-	if (NULL != request_package
-		&& request_package->msg_grp->count > count) {
-		static errno_t err = 0;
-
-		printf("at task os.multi level transmit task.send:instruction is \"%s\" answer is \"%s\"\r\n",
-			   request_package->msg_grp->units[count].string.ist,
-			   request_package->msg_grp->units[count].string.asw);
-
-		if ('\0' != *request_package->msg_grp->units[count].string.asw) {					/* TODO:string match part */
-			static at_size_t verify_count = 0;
-
-			if (AT_CFG_TRANSMIT_VERIFY_EXPIRE_COUNT_MAX <= verify_count) {					/* Allow MAX _TRANSMIT_VERIFY_OVERDUE_TIME_MAX times */
-				verify_count = 0;
-			} else {
-				verify_count++;
-
-				goto EXIT;
-			}
-		}
-
-		count++;																			/* Only count when answer string matched */
-
-		if (0 == request_package->send(request_package->device_ptr,
-								  request_package->msg_grp->units[count].string.ist,
-								  request_package->msg_grp->units[count].length.ist)) {
-			err = 1;
-			goto EXIT;
-		}
-
-	EXIT:
-
-		return;
-	} else {
-		if (NULL == (request_package = (message_package
-										= at_message_queue_ctrl.communication
-										.subscribe(mq_unit->mq_ptr,
-												   mq_unit->id)).message)) {
-			return;
-		}
-
-		count = 0;
-	}
 }
 
 /**

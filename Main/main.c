@@ -53,19 +53,34 @@ void main(void)
 {
 	main_platform_support_package_init();
 
-	WaitForSingleObject(thread_id_exit_control, INFINITE);									/* Wait the exit control run at least once */
 	WaitForSingleObject(thread_handle_hardware_layer, INFINITE);							/* Wait the hardware layer run at least once */
 
 	clocker_ctrl.start(clocker);
 
-	at_ctrl.transmit.multi_level.generate(at, "#3:1:2:1@1",									/* Generate the multi level at instruction */
-										  "level 1.\r\n",
-										  "level 2.", "\r\n",
-										  "level 3.\r\n", "FILE:__PERIPHERAL_DEVICE_SEND_TXT");
-	
-	at_ctrl.transmit.multi_level.send(at);													/* Send the multi level at instruction */
+	if (at_ctrl.transmit.multi_level
+		.generate(at, "#3:1:2:1@1",															/* Generate the multi level at instruction */
+				  "level 1.\r\n",
+				  "level 2.", "\r\n",
+				  "level 3.\r\n", "FILE:__PERIPHERAL_DEVICE_SEND_TXT")) {
+		return;
+	}
 
 	printf("have cost: %lldus \r\n", clocker_ctrl.stop(clocker));
+
+	while (true) {
+		main_software_layer();																/* Wait all the task run at least once */
+
+		static size_t cnt = 0;
+
+		if (50 < cnt++) {
+			break;
+		}
+	}
+
+	if (at_ctrl.transmit.multi_level
+		.send(at)) {																		/* Send the multi level at instruction */
+		return;
+	}
 
 	while (true) {
 		main_software_layer();
@@ -125,6 +140,8 @@ size_t __stdcall main_exit_control(PVOID arg)												/* Control if the main 
 	if ('0' != scanf_string[0]) {															/* If have input,set main_thred_exit */
 		main_thred_exit = true;
 	}
+
+	return 0;
 }
 
 size_t __stdcall main_hardware_layer(PVOID arg)												/* Simulate the peripheral device random communications */
