@@ -45,10 +45,10 @@
  * @brief This struct will contain all the universal vector functions address.
  */
 
-struct at_transmit_s {
-	at_size_t multi_level_transmit_level;
-	char *multi_level_transmit_promise_msg;
-	char *multi_level_transmit_msg;
+struct at_info_s {
+	char *feedback_sample_tail;
+
+	errno_t multi_level_transmit_error;
 };
 
 /**
@@ -66,7 +66,7 @@ struct at_exception_s {
 struct at_s {
 	bool switch_status;
 
-	struct at_transmit_s transmit;
+	struct at_info_s info;
 
 	struct at_exception_s exception;
 
@@ -102,6 +102,16 @@ struct at_multi_level_transmit_request_package_s {
 	errno_t(*send)(void *device, void *message, at_size_t len);
 };
 
+/**
+ * @brief This struct will contain all the information from the format analysis.
+ */
+
+struct at_multi_level_transmit_inquire_package_s {
+	size_t hash;
+
+	size_t error;
+};
+
 /*
 *********************************************************************************************************
 *                                            LOCAL TABLES
@@ -122,6 +132,7 @@ struct at_control_s at_ctrl = {
 	.transmit.single_level_send = at_control_transmit_single_level_send,
 	.transmit.multi_level.generate = at_control_transmit_multi_level_generate,
 	.transmit.multi_level.send = at_control_transmit_multi_level_send,
+	.transmit.multi_level.error = at_control_transmit_multi_level_error,
 
 	.task_os_tick = at_control_task_os_tick,
 	.device_interrupt = at_control_device_interrupt
@@ -154,7 +165,7 @@ struct at_transmit_format_analysis_package_s
  * @return void
  */
 
-void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list);
+void at_control_transmit_multi_level_send_task(void *arg_list);
 
 /**
  * @brief This function will be called when the multi level transmit generate.
@@ -225,7 +236,7 @@ errno_t at_control_configuration_init(struct at_s **at,
 		.init((*at)->task_os_ptr,															/* Initialize the multi level transmit task */
 			  &at_task_os_multi_level_transmit_task,
 			  "at task os.multi level transmit task",
-			  at_control_at_task_os_multi_level_transmit_task_function,
+			  at_control_transmit_multi_level_send_task,
 			  0,																			/* Set Max priority */
 			  NULL,
 			  0)) {
@@ -497,6 +508,33 @@ errno_t at_control_transmit_multi_level_send(struct at_s *at)
 }
 
 /**
+ * @brief This function will inquire the error code during the multi level sending.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_control_transmit_multi_level_error(struct at_s *at)
+{
+	assert(at);
+
+	static struct at_message_queue_message_package_s message_package;
+	static struct at_multi_level_transmit_inquire_package_s *inquire_message;
+
+	if (NULL == (message_package = at_message_queue_ctrl.communication
+				 .subscribe(at->message_queue_unit.mq_ptr, 1)).message) {
+		return 1;
+	}
+
+	inquire_message = message_package.message;
+
+																							/* TODO:Distinguish which instruction */
+
+	return inquire_message->error;
+}
+
+/**
  * @brief This function will handle the soft logic of the at task os.
  *
  * @param void
@@ -566,74 +604,100 @@ NOT_FIT:
  * @return void
  */
 
-void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list)
+void at_control_transmit_multi_level_send_task(void *arg_list)
 {
 	static struct at_multi_level_transmit_request_package_s
 		*request_package = NULL;
 
-	static at_size_t
-		count = 0xff;
-
 	struct at_task_function_arguement_list_package_s
 		*arg_list_package = arg_list;
 
-	struct at_message_queue_unit_s
-		*mq_unit_outward = NULL;
-
-	struct at_message_queue_message_package_s
-		message_package = { 0 };
+	static struct at_message_queue_unit_s
+		*mq_unit_outward;
 
 	char
 		*feedback_message = NULL;
 
+	#if (AT_CFG_DEBUG_EN)
+
 	printf("at task os.multi level transmit task.enter\r\n");
 
+	#endif // (AT_CFG_DEBUG_EN)
+
+	static at_size_t count = 0xff;
 	if (NULL != request_package
 		&& request_package->msg_grp->count > count) {
-		static errno_t err = 0;
+		#if (AT_CFG_DEBUG_EN)
 
 		printf("at task os.multi level transmit task.send:instruction is \"%s\" answer is \"%s\"\r\n",
 			   request_package->msg_grp->units[count].string.ist,
 			   request_package->msg_grp->units[count].string.asw);
 
+		#endif // (AT_CFG_DEBUG_EN)
+
+		static float search_substring_rate = 0.0;
+		static errno_t device_send_error = 0;
+
 		if ('\0' != *request_package->msg_grp->units[count].string.asw) {
-			if (NULL == (feedback_message
-						 = at_message_queue_ctrl.communication
+			static struct search_substring_package_s search_substring_package;
+
+			if (NULL == (feedback_message = at_message_queue_ctrl.communication
 						 .subscribe(arg_list_package->mq_unit->mq_ptr,						/* Subscribe the feedback message from the message queue host by task os */
 									arg_list_package->mq_unit->id).message)) {
 				return;
 			}
 
+			#if (AT_CFG_DEBUG_EN)
+
 			printf("at task os.multi level transmit task.message:\"%s\" \r\n", feedback_message);
 
-			struct search_substring_package_s
-				search_substring_package = {
-				.str.string = feedback_message,
-				.str.length = strlen(feedback_message),
-				.substr.string = request_package->msg_grp->units[count].string.asw,
-				.substr.length = request_package->msg_grp->units[count].length.asw
-			};
+			#endif // (AT_CFG_DEBUG_EN)
 
-			if (1.0f > search_substring_control(AT_CFG_TRANSMIT_SEARCH_SUBSTRING_ALGORITHM,
-												search_substring_package)) {				/* Verify the message string,if not match */
+			search_substring_package.str.string = feedback_message;
+			search_substring_package.str.length = strlen(feedback_message);
+			search_substring_package.substr.string = request_package->msg_grp->units[count].string.asw;
+			search_substring_package.substr.length = request_package->msg_grp->units[count].length.asw;
+
+			if (1.0f > (search_substring_rate
+						= search_substring_control(AT_CFG_TRANSMIT_SEARCH_SUBSTRING_ALGORITHM,
+												   search_substring_package))) {			/* Verify the message string,if not match */
 				static at_size_t verify_count = 0;
 
 				if (AT_CFG_TRANSMIT_VERIFY_EXPIRE_COUNT_MAX <= verify_count) {				/* Allow MAX _TRANSMIT_VERIFY_OVERDUE_TIME_MAX times */
 					verify_count = 0;
+
+					device_send_error = 0;
+					goto FAIL;
 				} else {
-					//verify_count++;
+					verify_count++;
 
 					goto EXIT;
 				}
-			} else {
 			}
 		}
 
-		if (0 == request_package->send(request_package->device_ptr,
-									   request_package->msg_grp->units[count].string.ist,
-									   request_package->msg_grp->units[count].length.ist)) {
-			err = 1;
-			goto EXIT;
+		device_send_error = request_package
+			->send(request_package->device_ptr,												/* Send the instruction to the device */
+				   request_package->msg_grp->units[count].string.ist,
+				   request_package->msg_grp->units[count].length.ist);
+
+		if (1.0f == search_substring_rate) {
+			static struct at_multi_level_transmit_inquire_package_s *inquire_package_ptr;
+
+		FAIL:
+
+			if (NULL == (inquire_package_ptr
+						 = calloc(1, sizeof(struct at_multi_level_transmit_inquire_package_s)))) {
+				while (true) {
+				}
+			}
+
+			inquire_package_ptr->error = device_send_error;
+
+			at_message_queue_ctrl.communication
+				.publish(mq_unit_outward->mq_ptr,
+						 inquire_package_ptr,
+						 1, 3);
 		}
 
 	EXIT:
@@ -642,6 +706,8 @@ void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list)
 
 		return;
 	} else {
+		static struct at_message_queue_message_package_s message_package;
+
 		if (NULL == (mq_unit_outward
 					 = at_task_ctrl.task.message_queue.outward
 					 .join(arg_list_package->task_os,

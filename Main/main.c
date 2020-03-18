@@ -90,6 +90,9 @@ void main(void)
 		}
 	}
 
+	printf("at.transmit.multi_level.send.error:%d \r\n",
+		   at_ctrl.transmit.multi_level.error(at));
+
 	at_ctrl.configuration.destroy(&at);
 
 	_endthreadex(thread_id_hardware_layer);

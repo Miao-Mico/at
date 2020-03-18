@@ -56,6 +56,8 @@ struct at_control_s {
 							   char *format, char *ist, ...);
 
 			errno_t(*send)(struct at_s *at);
+
+            errno_t(*error)(struct at_s *at);
 		} multi_level;
 	}transmit;
 
@@ -135,6 +137,16 @@ errno_t at_control_transmit_multi_level_generate(struct at_s *at,
  */
 
 errno_t at_control_transmit_multi_level_send(struct at_s *at);
+
+/**
+ * @brief This function will inquire the error code during the multi level sending.
+ *
+ * @param void
+ *
+ * @return void
+ */
+
+errno_t at_control_transmit_multi_level_error(struct at_s *at);
 
 /**
  * @brief This function will handle the soft logic of the at task os.
