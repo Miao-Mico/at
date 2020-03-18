@@ -941,7 +941,7 @@ at_list_priority_queue_control_package_modifiers_delete(void *data_structure,
 static inline errno_t
 at_red_black_tree_control_package_configration_init(void **data_structure)
 {
-	red_black_tree_control_configuration_init((struct tree_family_s **)data_structure,
+	red_black_tree_control_configuration_init((red_black_tree_stpp)data_structure,
 											  10,
 											  NULL,
 											  NULL);
@@ -960,7 +960,7 @@ at_red_black_tree_control_package_configration_init(void **data_structure)
 static inline errno_t
 at_red_black_tree_control_package_configration_destroy(void **data_structure)
 {
-	tree_family_control_configuration_destroy((struct tree_family_s **)data_structure);     /* Destroy the data structure */
+	tree_family_control_configuration_destroy((red_black_tree_stpp)data_structure);     /* Destroy the data structure */
 
 	return 0;
 }
@@ -1012,7 +1012,7 @@ static inline void
 	assert(data_structure);
 
 	tree_family_search_node_return_st search_return =
-		tree_family_control_search((struct tree_family_s *)data_structure,
+		tree_family_control_search((red_black_tree_stp)data_structure,
 		(void *)&position);
 
 	if (NULL == search_return.node) {
@@ -1047,7 +1047,7 @@ at_red_black_tree_control_package_modifiers_insert(void *data_structure,
 	specific_data.id = *(size_t *)data;
 	specific_data.data = *((void **)data + 1);
 
-	tree_family_control_insert((struct tree_family_s *)data_structure,
+	tree_family_control_insert((red_black_tree_stp)data_structure,
 							   &specific_data);
 
 	return 0;
@@ -1068,7 +1068,7 @@ at_red_black_tree_control_package_modifiers_delete(void *data_structure,
 {
 	assert(data_structure);
 
-	tree_family_control_delete((struct tree_family_s *)data_structure,
+	tree_family_control_delete((red_black_tree_stp)data_structure,
 		(void *)&position);
 
 	return 0;
