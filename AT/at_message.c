@@ -364,7 +364,7 @@ errno_t at_message_queue_control_configuration_init(struct at_message_queue_s **
 
 	#endif // __AT_DATA_STRUCTURE_TEMPLATE_H
 
-	if (NULL == ((*message_queue) 
+	if (NULL == ((*message_queue)
 				 = calloc(1, sizeof(struct at_message_queue_s)))) {							/* Allocate the message queue */
 		return -1;
 	}
@@ -384,15 +384,15 @@ errno_t at_message_queue_control_configuration_init(struct at_message_queue_s **
 	(*message_queue)->exchange_ptr = exchange;
 
 	return 0;
-	}
+}
 
-	/**
-	 * @brief This function will publish a message into the message queue pool.
-	 *
-	 * @param void
-	 *
-	 * @return void
-	 */
+/**
+ * @brief This function will publish a message into the message queue pool.
+ *
+ * @param void
+ *
+ * @return void
+ */
 
 errno_t at_message_queue_control_configuration_destroy(struct at_message_queue_s **message_queue)
 {

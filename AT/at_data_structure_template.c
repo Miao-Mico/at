@@ -375,7 +375,7 @@ struct at_data_structure_control_package_s at_list_stack_control_package = {
 	.configuration.destroy = at_list_stack_control_package_configration_destroy,
 
 	.capacity.size = at_list_stack_control_package_capacity_size,
-    .capacity.empty = at_list_stack_control_package_capacity_empty,
+	.capacity.empty = at_list_stack_control_package_capacity_empty,
 
 	.element_access.at = (at_import_func_t)at_list_stack_control_package_element_access_at,
 
@@ -842,9 +842,9 @@ at_list_priority_queue_control_package_capacity_size(void *data_structure)
 static inline bool
 at_list_priority_queue_control_package_capacity_empty(void *data_structure)
 {
-    assert(data_structure);
+	assert(data_structure);
 
-    return (at_size_t)priority_queue_ctrl.capacity.empty((priority_queue_stp)data_structure);
+	return (at_size_t)priority_queue_ctrl.capacity.empty((priority_queue_stp)data_structure);
 }
 
 /**

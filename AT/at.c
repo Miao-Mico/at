@@ -254,12 +254,24 @@ errno_t at_control_configuration_destroy(struct at_s **at)
 	assert(at);
 	assert(*at);
 
-	if (at_message_pool_ctrl.configuration.destroy(&(*at)->message_pool_ptr)) {				/* Destroy the at message */
+	if (at_task_ctrl.os.configuration
+		.destroy(&(*at)->task_os_ptr)) {													/* Destroy the at tack os */
+		return 2;
+	}
+
+	if (at_message_pool_ctrl.configuration
+		.destroy(&(*at)->message_pool_ptr)) {												/* Destroy the at message pool */
 		return 1;
 	}
 
-	if (at_task_ctrl.os.configuration.destroy(&(*at)->task_os_ptr)) {						/* Destroy the at tack os */
-		return 2;
+	if (at_message_queue_ctrl.configuration
+		.destroy(&(*at)->message_queue_unit.mq_ptr)) {										/* Destroy the at message queue */
+		return 1;
+	}
+
+	if ((*at)->device_package_ptr->configuration
+		.demount((*at)->device_package_ptr)) {												/* Demount the device */
+		return 3;
 	}
 
 	free(*at);

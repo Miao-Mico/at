@@ -307,6 +307,11 @@ errno_t at_task_control_os_configuration_destroy(struct at_task_os_s **task_os)
 			destroy(&(*task_os)->task_list[cnt].suspend);
 	}
 
+	if (at_message_queue_ctrl.configuration
+		.destroy(&(*task_os)->mq_unit.mq_ptr)) {											/* Destroy the message queue */
+		return 1;
+	}
+
 	(*task_os) = NULL;
 
 	return 0;
@@ -582,7 +587,7 @@ at_task_control_task_configuration_suspend(struct at_task_os_s *task_os,
 
 	void *task_addr = NULL;
 
-	if (NULL == (task_addr 
+	if (NULL == (task_addr
 				 = at_task_os_task_list_package->element_access
 				 .at(task_os->task_list[task->info.priority].ready))) {						/* Access the pointer task from the ready list */
 		return 1;

@@ -90,8 +90,6 @@ void main(void)
 		}
 	}
 
-	at_windows_peripheral_package->configuration.demount(at_windows_peripheral_package);
-
 	at_ctrl.configuration.destroy(&at);
 
 	_endthreadex(thread_id_hardware_layer);
