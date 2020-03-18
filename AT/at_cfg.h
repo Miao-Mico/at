@@ -30,6 +30,12 @@
  */
 
 /* Configure    if enable integrated structure.                                                         */
+#define AT_CFG_INTERGRATED_STRUCTURE_MODE_EN								1u
+
+/* Configure    if enable integrated structure.                                                         */
+#define AT_CFG_DEBUG_EN														0u
+
+/* Configure    if enable integrated structure.                                                         */
 #define AT_CFG_SIZE_TYPE								                    size_t
 
 /* Configure    if enable integrated structure.                                                         */
@@ -39,10 +45,7 @@
 #define AT_CFG_TRANSMIT_VERIFY_EXPIRE_COUNT_MAX						        5u
 
 /* Configure    if enable integrated structure.                                                         */
-#define AT_CFG_INTERGRATED_STRUCTURE_MODE_EN								1u
-
-/* Configure    if enable integrated structure.                                                         */
-#define AT_CFG_DEBUG_EN														0u
+#define AT_CFG_TRANSMIT_SEARCH_SUBSTRING_ALGORITHM						    SUNDAY_ALGORITHM
 
 /**
  *                                          A T     D E V I C E

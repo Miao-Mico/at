@@ -197,7 +197,7 @@ errno_t at_control_configuration_init(struct at_s **at,
 	if (at_message_pool_ctrl.configuration
 		.init(&(*at)->message_pool_ptr,														/* Initialize the at message pool */
 			  NULL,
-			  NULL)) {	
+			  NULL)) {
 		return 2;
 	}
 
@@ -572,7 +572,7 @@ void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list)
 		message_package = { 0 };
 
 	char
-		*message = NULL;
+		*feedback_message = NULL;
 
 	printf("at task os.multi level transmit task.enter\r\n");
 
@@ -585,16 +585,25 @@ void at_control_at_task_os_multi_level_transmit_task_function(void *arg_list)
 			   request_package->msg_grp->units[count].string.asw);
 
 		if ('\0' != *request_package->msg_grp->units[count].string.asw) {
-			if (NULL == (message
+			if (NULL == (feedback_message
 						 = at_message_queue_ctrl.communication
 						 .subscribe(arg_list_package->mq_unit->mq_ptr,						/* Subscribe the feedback message from the message queue host by task os */
 									arg_list_package->mq_unit->id).message)) {
 				return;
 			}
 
-			printf("at task os.multi level transmit task.message:\"%s\" \r\n", message);
+			printf("at task os.multi level transmit task.message:\"%s\" \r\n", feedback_message);
 
-			if (false) {																	/* TODO:Verify the message string,if not match */
+			struct search_substring_package_s
+				search_substring_package = {
+				.str.string = feedback_message,
+				.str.length = strlen(feedback_message),
+				.substr.string = request_package->msg_grp->units[count].string.asw,
+				.substr.length = request_package->msg_grp->units[count].length.asw
+			};
+
+			if (1.0f > search_substring_control(AT_CFG_TRANSMIT_SEARCH_SUBSTRING_ALGORITHM,
+												search_substring_package)) {				/* Verify the message string,if not match */
 				static at_size_t verify_count = 0;
 
 				if (AT_CFG_TRANSMIT_VERIFY_EXPIRE_COUNT_MAX <= verify_count) {				/* Allow MAX _TRANSMIT_VERIFY_OVERDUE_TIME_MAX times */

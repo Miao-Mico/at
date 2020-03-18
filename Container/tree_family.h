@@ -35,7 +35,7 @@
 #define TREE_FAMILY_CFG_NODE_COUNT_MAX								    100
 
 /* Configure    the type of sort algorithm.                                                             */
-#define TREE_FAMILY_CFG_DEBUG_EN								        1u
+#define TREE_FAMILY_CFG_DEBUG_EN								        0u
 
 /**
  *                                          DEBUG OPERATOR

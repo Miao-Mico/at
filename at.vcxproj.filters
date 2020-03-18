@@ -117,6 +117,9 @@
     <ClCompile Include="Container\tree_family.c">
       <Filter>源文件\container</Filter>
     </ClCompile>
+    <ClCompile Include="Container\search_substring.c">
+      <Filter>源文件\container</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AT\at.h">
@@ -234,6 +237,9 @@
       <Filter>头文件\container</Filter>
     </ClInclude>
     <ClInclude Include="Container\tree_family.h">
+      <Filter>头文件\container</Filter>
+    </ClInclude>
+    <ClInclude Include="Container\search_substring.h">
       <Filter>头文件\container</Filter>
     </ClInclude>
   </ItemGroup>

@@ -159,6 +159,7 @@
     <ClCompile Include="Container\priority_queue.c" />
     <ClCompile Include="Container\queue.c" />
     <ClCompile Include="Container\red_black_tree.c" />
+    <ClCompile Include="Container\search_substring.c" />
     <ClCompile Include="Container\sort.c" />
     <ClCompile Include="Container\stack.c" />
     <ClCompile Include="Container\tree_family.c" />
@@ -197,6 +198,7 @@
     <ClInclude Include="Container\priority_queue.h" />
     <ClInclude Include="Container\queue.h" />
     <ClInclude Include="Container\red_black_tree.h" />
+    <ClInclude Include="Container\search_substring.h" />
     <ClInclude Include="Container\sort.h" />
     <ClInclude Include="Container\stack.h" />
     <ClInclude Include="Container\tree_family.h" />
