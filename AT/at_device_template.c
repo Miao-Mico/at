@@ -171,16 +171,16 @@ at_device_package_packer_windows_file_stream(struct at_device_package_s **packag
 
 	(*package)->device_pack_id = AT_DEVICE_TEMPLATE_CFG_WINDOWS_FILE_STREAM_ID;
 
-	(*package)->configuration.mount = (at_import_func_t)at_windows_control_configuration_mount;
-	(*package)->configuration.demount = (at_import_func_t)at_windows_control_configuration_demount;
+	(*package)->configuration.mount = at_windows_control_configuration_mount;
+	(*package)->configuration.demount = at_windows_control_configuration_demount;
 
-	(*package)->transmit.send = (at_import_func_t)at_windows_control_transmit_send;
-	(*package)->transmit.receive = (at_import_func_t)at_windows_control_transmit_receive;
+	(*package)->transmit.send = at_windows_control_transmit_send;
+	(*package)->transmit.receive = at_windows_control_transmit_receive;
 
-	(*package)->interrupt = (at_import_func_t)at_windows_control_interrupt;
+	(*package)->interrupt = at_windows_control_interrupt;
 
-	(*package)->verify.device = (at_import_func_t)at_windows_control_verify_device;
-	(*package)->verify.package = (at_import_func_t)at_windows_control_verify_package;
+	(*package)->verify.device = at_windows_control_verify_device;
+	(*package)->verify.package = at_windows_control_verify_package;
 
 	if (!at_windows_control_verify_package((*package))) {
 		free((*package));

@@ -85,45 +85,7 @@ typedef struct at_s
 **at_stpp;
 
 /**
- * @brief This struct will contain all the universal device functions.
- */
-
-struct at_device_package_s {
-	/* @brief This variables will point to the device. */
-	at_size_t device_pack_id;
-
-	/* @brief This variables will point to the device. */
-	void *device_ptr;
-
-	struct {
-		/* @brief This function will mount the device. */
-		at_import_func_t mount;
-
-		 /* @brief This function will demount the device to be default. */
-		at_import_func_t demount;
-	}configuration;
-
-	struct {
-		/* @brief This function will initialize the device. */
-		at_import_func_t send;
-
-		/* @brief This function will initialize the device to be default. */
-		at_import_func_t receive;
-	}transmit;
-
-	struct {
-		/* @brief This function will verify the device if valid. */
-		at_import_func_t device;
-
-		/* @brief This function will verify the device if valid. */
-		at_import_func_t package;
-	}verify;
-
-	at_import_func_t interrupt;
-};
-
-/**
- * @brief This typedef will extern the type of at.
+ * @brief This typed is the at device package interrupt return typedef.
  */
 
 struct at_device_package_interrupt_return_s {
@@ -133,7 +95,48 @@ struct at_device_package_interrupt_return_s {
 };
 
 /**
- * @brief This typedef will extern the type of at.
+ * @brief This struct will contain all the universal device functions.
+ */
+
+struct at_device_package_s {
+	/* @brief This variables will point to the device.													*/
+	at_size_t device_pack_id;
+
+	/* @brief This variables will point to the device.													*/
+	void *device_ptr;
+
+	struct {
+		/* @brief This function will mount the device.													*/
+		errno_t(*mount)(struct at_device_package_s *package,
+						void *arg_list);
+
+		 /* @brief This function will demount the device to be default.									*/
+		errno_t(*demount)(struct at_device_package_s *package);
+	}configuration;
+
+	struct {
+		/* @brief This function will initialize the device.												*/
+		errno_t(*send)(void *device,
+					   void *data, size_t len);
+
+	   /* @brief This function will initialize the device to be default.								*/
+		void *(*receive)(void *device, size_t len);
+	}transmit;
+
+	struct {
+		/* @brief This function will verify the device if valid.										*/
+		bool(*device)(void *device);
+
+		/* @brief This function will verify the device if valid.										*/
+		bool(*package)(struct at_device_package_s *package);
+	}verify;
+
+	/* @brief This function will handle the interruption of the device,if exist.						*/
+	struct at_device_package_interrupt_return_s *(*interrupt)(void *device);
+};
+
+/**
+ * @brief This type is the at device package packer typedef.
  */
 
 typedef errno_t(*at_device_package_packer_func_t)(struct at_device_package_s **package,
