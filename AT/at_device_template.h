@@ -45,9 +45,9 @@ struct at_device_package_packer_s {
 	/* @brief This function will initialize the i/o stream of the windows.                              */
 	at_device_package_packer_func_t windows_file_stream;
 
-    #else
+	#else
 
-    #error "Please transplant a good device package fit your platform!"
+	#error "Please transplant a good device package fit your platform!"
 
 	#endif // __PLATFORM
 };
