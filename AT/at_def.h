@@ -132,7 +132,7 @@ struct at_device_package_s {
 	}verify;
 
 	/* @brief This function will handle the interruption of the device,if exist.						*/
-	struct at_device_package_interrupt_return_s *(*interrupt)(void *device);
+	struct at_device_package_interrupt_return_s (*interrupt)(void *device);
 };
 
 /**
@@ -187,22 +187,6 @@ struct at_data_structure_package_s {
 	struct at_data_structure_control_package_s *control_ptr;
 
 	void *data_structure_ptr;
-};
-
-/**
- * @brief This struct will contain all the universal vector functions address.
- */
-
-struct at_timeout_package_s {
-	struct {
-		at_import_func_t init;
-
-		at_import_func_t destroy;
-	}configuration;
-
-	at_import_func_t set;
-
-	at_import_func_t inquire;
 };
 
 /*

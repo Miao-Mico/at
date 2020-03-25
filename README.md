@@ -26,9 +26,9 @@ Those  *italic* part support for customization, this means if you feel it not ve
   - [x] Single Level Send And Result
   - [x] Multi Level Send
   - [ ] Inquire Multi Level Send Result
-- [ ] Receive AT Instruction
-- [ ] Customized Platform Or Device
-- [ ] Customized Data Structure
+- [x] Receive AT Instruction
+- [x] Customized Platform Or Device
+- [x] Customized Data Structure
 
 ## Feature
 

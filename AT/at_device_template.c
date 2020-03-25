@@ -93,7 +93,7 @@ void *at_windows_control_transmit_receive(void *device, size_t len);
  * @return void
  */
 
-struct at_device_package_interrupt_return_s *at_windows_control_interrupt(void *device);
+struct at_device_package_interrupt_return_s at_windows_control_interrupt(void *device);
 
 /**
  * @brief This function will verify if the windows i/o device is valid.
@@ -317,7 +317,7 @@ static inline void
  */
 
 static inline struct at_device_package_interrupt_return_s
-*at_windows_control_interrupt(void *device)
+at_windows_control_interrupt(void *device)
 {
 	assert(device);
 
@@ -329,9 +329,15 @@ static inline struct at_device_package_interrupt_return_s
 	interrupt.string =
 		at_windows_control_transmit_receive(device, INTERRUPT_DATA_LENGTH_MAX + 1);
 
+	if (NULL == interrupt.string) {
+		goto EXIT;
+	}
+
 	interrupt.count = INTERRUPT_DATA_LENGTH_MAX;
 
-	return &interrupt;
+	EXIT:
+
+	return interrupt;
 }
 
 /**
