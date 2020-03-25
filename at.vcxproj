@@ -71,19 +71,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Storage\Project\Microsoft-Visual-Studio\at\Text;C:\Storage\Project\Microsoft-Visual-Studio\at\Time Manage;C:\Storage\Project\Microsoft-Visual-Studio\at\Container;C:\Storage\Project\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\Container;$(ProjectDir)\Text;$(ProjectDir)\Time Manage;$(ProjectDir)\AT;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Storage\Project\Microsoft-Visual-Studio\at\Text;C:\Storage\Project\Microsoft-Visual-Studio\at\Time Manage;C:\Storage\Project\Microsoft-Visual-Studio\at\Container;C:\Storage\Project\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Storages\Project\Microsoft\Microsoft-Visual-Studio\at\Container;C:\Storages\Project\Microsoft\Microsoft-Visual-Studio\at\Text;C:\Storages\Project\Microsoft\Microsoft-Visual-Studio\at\Time Manage;C:\Storages\Project\Microsoft\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Storage\Project\Microsoft-Visual-Studio\at\Text;C:\Storage\Project\Microsoft-Visual-Studio\at\Time Manage;C:\Storage\Project\Microsoft-Visual-Studio\at\Container;C:\Storage\Project\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Storages\Project\Microsoft\Microsoft-Visual-Studio\at\Container;C:\Storages\Project\Microsoft\Microsoft-Visual-Studio\at\Text;C:\Storages\Project\Microsoft\Microsoft-Visual-Studio\at\Time Manage;C:\Storages\Project\Microsoft\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Storage\Project\Microsoft-Visual-Studio\at\Text;C:\Storage\Project\Microsoft-Visual-Studio\at\Time Manage;C:\Storage\Project\Microsoft-Visual-Studio\at\Container;C:\Storage\Project\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Storages\Project\Microsoft\Microsoft-Visual-Studio\at\Container;C:\Storages\Project\Microsoft\Microsoft-Visual-Studio\at\Text;C:\Storages\Project\Microsoft\Microsoft-Visual-Studio\at\Time Manage;C:\Storages\Project\Microsoft\Microsoft-Visual-Studio\at\AT;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
