@@ -30,6 +30,14 @@ Those  *italic* part support for customization, this means if you feel it not ve
 - [x] Customized Platform Or Device
 - [x] Customized Data Structure
 
+### What I Confuse
+
+- [ ] Handle The Error
+- [ ] Assert
+- [ ] RELEASE Can't Perform Well But DEBUG Can
+
+**If you have any idea, set up a Issue for me?**
+
 ## Feature
 
 - **Poly-Instantiation**
