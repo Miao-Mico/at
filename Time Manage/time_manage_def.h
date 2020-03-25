@@ -115,7 +115,8 @@ time_manage_control_convert_timer_counter_tick_to_microsec(time_manage_float_t t
 
 	time_manage_size_t microsec = 0;
 
-	if (0 == timer_ticks_per_microsec) {
+	if (0u == timer_ticks_per_microsec 
+		&& 0u != timer_freq) {
 		timer_ticks_per_microsec = 1000000.0f / timer_freq;
 	}
 

@@ -25,7 +25,7 @@
 */
 
 /**
- * @brief This type is the at message structure.
+ * @brief This type is the at message pool structure.
  */
 
 struct at_message_pool_s {
@@ -35,7 +35,7 @@ struct at_message_pool_s {
 };
 
 /**
- * @brief This type is the at message structure.
+ * @brief This type is the at message queue structure.
  */
 
 struct at_message_queue_s {
@@ -51,6 +51,16 @@ struct at_message_queue_s {
 	at_message_queue_exchange_ftp exchange_ptr;
 };
 
+/**
+ * @brief This type is the message queue message package structure.
+ */
+
+struct at_message_queue_queue_package_s {
+	at_size_t id;
+
+	void *queue;
+};
+
 /*
 *********************************************************************************************************
 *                                            LOCAL TABLES
@@ -64,7 +74,7 @@ struct at_message_queue_s {
 */
 
 /**
- * @brief This struct is the body of at message control struct.
+ * @brief This struct is the body of at message pool control struct.
  */
 
 struct at_message_pool_control_s at_message_pool_ctrl = {
@@ -99,7 +109,7 @@ struct at_message_queue_control_s at_message_queue_ctrl = {
 */
 
 /**
- * @brief This function will publish a message into the message queue pool.
+ * @brief This function will exchange messages into the message queues.
  *
  * @param void
  *
@@ -122,7 +132,7 @@ errno_t at_message_queue_control_exchange(struct at_message_queue_s *message_que
 */
 
 /**
- * @brief This function will initialize the at message pool.
+ * @brief This function will initialize the message pool.
  *
  * @param void
  *
@@ -173,7 +183,7 @@ errno_t at_message_pool_control_configuration_init(struct at_message_pool_s **me
 }
 
 /**
- * @brief This function will destroy the at message pool.
+ * @brief This function will destroy the message pool.
  *
  * @param void
  *
@@ -199,7 +209,7 @@ errno_t at_message_pool_control_configuration_destroy(struct at_message_pool_s *
 }
 
 /**
- * @brief This function will deposit the at message into the at message pool for transmit.
+ * @brief This function will deposit the message into the at message pool for transmit.
  *
  * @param void
  *
@@ -246,7 +256,7 @@ errno_t at_message_pool_control_transmit_deposit(struct at_message_pool_s *messa
 }
 
 /**
- * @brief This function will load the at message from the at message pool for transmit.
+ * @brief This function will load the message from the at message pool for transmit.
  *
  * @param void
  *
@@ -277,7 +287,7 @@ struct at_message_transmit_group_s
 }
 
 /**
- * @brief This function will deposit the at message into the at message pool for feedback.
+ * @brief This function will deposit the message into the at message pool for feedback.
  *
  * @param void
  *
@@ -307,7 +317,7 @@ errno_t at_message_pool_control_feedback_deposit(struct at_message_pool_s *messa
 }
 
 /**
- * @brief This function will load the at message from the at message pool for feedback.
+ * @brief This function will load the message from the at message pool for feedback.
  *
  * @param void
  *
@@ -333,7 +343,7 @@ void *at_message_pool_control_feedback_load(struct at_message_pool_s *message_po
 }
 
 /**
- * @brief This function will publish a message into the message queue pool.
+ * @brief This function will initialize the message queue.
  *
  * @param void
  *
@@ -387,7 +397,7 @@ errno_t at_message_queue_control_configuration_init(struct at_message_queue_s **
 }
 
 /**
- * @brief This function will publish a message into the message queue pool.
+ * @brief This function will destroy the message queue.
  *
  * @param void
  *
@@ -407,7 +417,7 @@ errno_t at_message_queue_control_configuration_destroy(struct at_message_queue_s
 }
 
 /**
- * @brief This function will publish a message into the message queue pool.
+ * @brief This function will exchange messages into the message queue.
  *
  * @param void
  *
@@ -437,7 +447,7 @@ errno_t at_message_queue_control_exchange(struct at_message_queue_s *message_que
 }
 
 /**
- * @brief This function will make a queue for the caller,then join it into the message queue pool.
+ * @brief This function will let the caller join into the message queue.
  *
  * @param void
  *
@@ -471,7 +481,7 @@ at_size_t at_message_queue_control_membership_join(struct at_message_queue_s *me
 }
 
 /**
- * @brief This function will quit from message queue pool.
+ * @brief This function will let the caller quit into the message queue.
  *
  * @param void
  *
@@ -491,9 +501,9 @@ errno_t at_message_queue_control_membership_quit(struct at_message_queue_s *mess
 		return 1;
 	}
 
-	if (message_queue->queue_manager_package.control_ptr->modifiers							/* Push the queue into the manage pool */
-		.delete(message_queue->queue_manager_package.data_structure_ptr,
-				queue, 0)) {
+	if (message_queue->queue_manager_package.control_ptr->modifiers		
+		.delete(message_queue->queue_manager_package.data_structure_ptr,					/* Delete the queue from the manager data structure */
+				NULL, who_are_you)) {
 		return 2;
 	}
 
@@ -506,7 +516,7 @@ errno_t at_message_queue_control_membership_quit(struct at_message_queue_s *mess
 }
 
 /**
- * @brief This function will publish a message into the message queue pool.
+ * @brief This function will publish a message into the message queue.
  *
  * @param void
  *
@@ -538,7 +548,7 @@ at_message_queue_control_communication_publish(struct at_message_queue_s *messag
 }
 
 /**
- * @brief This function will subscribe a message from the message queue pool.
+ * @brief This function will subscribe a message from the message queue.
  *
  * @param void
  *

@@ -228,7 +228,7 @@ errno_t at_control_configuration_init(struct at_s **at,
 
 	if (at_task_ctrl.os.configuration
 		.init(&(*at)->task_os_ptr,
-		(*at)->message_queue_unit.mq_ptr)) {												/* Initialize the at task os */
+			  (*at)->message_queue_unit.mq_ptr)) {												/* Initialize the at task os */
 		return 5;
 	}
 
@@ -564,13 +564,13 @@ at_control_device_interrupt(struct at_s *at)
 	assert(at);
 
 	struct at_device_package_interrupt_return_s
-		*interrupt_return = NULL;
+		interrupt_return = { 0 };
 
 	static char string[100] = { 0 };
 	static at_size_t count = 0;
 
-	if (NULL == (interrupt_return = (at->device_package_ptr->
-									 interrupt(at->device_package_ptr->device_ptr)))->string) {
+	if (NULL == (interrupt_return = (at->device_package_ptr
+									 ->interrupt(at->device_package_ptr->device_ptr))).string) {
 		return;
 	}
 
@@ -578,8 +578,11 @@ at_control_device_interrupt(struct at_s *at)
 
 	char template[] = "\n";
 
-	memcpy(string + count, interrupt_return->string, interrupt_return->count);
-	count += interrupt_return->count;
+	if (NULL == memcpy(string + count, interrupt_return.string, interrupt_return.count)) {
+		return;
+	}
+
+	count += interrupt_return.count;
 
 	if (NULL == strstr(string, template)) {
 		goto NOT_FIT;
