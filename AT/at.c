@@ -666,7 +666,7 @@ void at_control_transmit_multi_level_send_task(void *arg_list)
 												   search_substring_package))) {			/* Verify the message string,if not match */
 				static at_size_t verify_count = 0;
 
-				if (AT_CFG_TRANSMIT_VERIFY_EXPIRE_COUNT_MAX <= verify_count) {				/* Allow MAX _TRANSMIT_VERIFY_OVERDUE_TIME_MAX times */
+				if (AT_CFG_TRANSMIT_VERIFY_EXPIRE_COUNT_MAX <= verify_count) {				/* Allow MAX _TRANSMIT_VERIFY_OVERDUE_TIME_MAX times,then timeout */
 					verify_count = 0;
 
 					device_send_error = 0;
@@ -679,7 +679,7 @@ void at_control_transmit_multi_level_send_task(void *arg_list)
 			}
 		}
 
-		device_send_error = request_package
+		device_send_error = request_package													/* If the device send code is not 0,it's correct */
 			->send(request_package->device_ptr,												/* Send the instruction to the device */
 				   request_package->msg_grp->units[count].string.ist,
 				   request_package->msg_grp->units[count].length.ist);
@@ -690,15 +690,16 @@ void at_control_transmit_multi_level_send_task(void *arg_list)
 		FAIL:
 
 			if (NULL == (inquire_package_ptr
-						 = calloc(1, sizeof(struct at_multi_level_transmit_inquire_package_s)))) {
+						 = calloc(1,														/* Allocate a inquire package */
+								  sizeof(struct at_multi_level_transmit_inquire_package_s)))) {
 				while (true) {
 				}
 			}
 
-			inquire_package_ptr->error = device_send_error;
+			inquire_package_ptr->error = device_send_error;									/* Set the error of the inquire package */
 
 			at_message_queue_ctrl.communication
-				.publish(mq_unit_outward->mq_ptr,
+				.publish(mq_unit_outward->mq_ptr,											/* Publish the inquire package to the message queue */
 						 inquire_package_ptr,
 						 1, 3);
 		}
@@ -709,18 +710,15 @@ void at_control_transmit_multi_level_send_task(void *arg_list)
 
 		return;
 	} else {
-		static struct at_message_queue_message_package_s message_package;
-
 		if (NULL == (mq_unit_outward
 					 = at_task_ctrl.task.message_queue.outward
-					 .join(arg_list_package->task_os,
+					 .join(arg_list_package->task_os,										/* Join the message queue hosted by outward */
 						   arg_list_package->task))) {
 			return;
 		}
 
-		if (NULL == (request_package = (message_package										/* Subscribe the message from outward message queue host by at */
-										= at_message_queue_ctrl.communication
-										.subscribe(mq_unit_outward->mq_ptr,
+		if (NULL == (request_package = (at_message_queue_ctrl.communication
+										.subscribe(mq_unit_outward->mq_ptr,					/* Subscribe the message from outward message queue host by at */
 												   mq_unit_outward->id)).message)) {
 			return;
 		}
